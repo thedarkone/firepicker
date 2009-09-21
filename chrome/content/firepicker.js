@@ -109,7 +109,6 @@ function rgbToHex(value) {
   });
 }
 
-
 Firebug.FirepickerModel = extend(Firebug.Module, {
   tags: domplate({
     colorValuesContainer: DIV({'class': 'firepicker_color_container'}),
@@ -117,10 +116,6 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
       DIV({'class': 'css_text'}, '$color')
     )
   }),
-  
-  showPanel: function(browser, panel) {
-    this.initialize();
-  },
   
   enable: function() {
     if (!this.initialized) { this.initialize(); }
