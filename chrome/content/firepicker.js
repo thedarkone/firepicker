@@ -141,7 +141,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   
   handleValueChangeInEditor: function(editor, newValue) {
     this.addStyleSheet(editor.box.ownerDocument);
-    this.updateEditorColorDropDown(editor.box, this.filterColorValues(this.splitCSSValues(newValue)));
+    this.updateEditorColorDropDown(editor.box, this.filterColorValues(splitCSSValues(newValue)));
   },
   
   filterColorValues: function(cssValues) {
@@ -189,17 +189,6 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     dropDownContainer.style.display = colorValues.length == 0 ? 'none' : 'block';
   },
   
-  splitCSSValues: function(cssValue) {
-    var offset = 0, cssValues = [], nextValue = parseCSSValue(cssValue, offset), previousValue;
-    while (nextValue) {
-      cssValues.push(nextValue);
-      offset        = nextValue.end + 1;
-      previousValue = nextValue;
-      while ((nextValue = parseCSSValue(cssValue, offset)) && nextValue.start == previousValue.start) { offset++; }
-    }
-    return cssValues;
-  },
-  
   hookIntoCSSPanel: function() {
     var self = this, stylesheetPanelPrototype = Firebug.getPanelType('css').prototype, original = stylesheetPanelPrototype.getEditor;
     stylesheetPanelPrototype.getEditor = function() {
@@ -210,10 +199,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   },
   
   openColorPickerPopUp: function(colorCell, color, callback) {
-    var panel = $('fp-panel', document), deck = $('fbPanelBar2', document).deck,
-        browser = $('fp-panel-browser', document), body = browser.contentDocument.body;
-    
-    var OFFSET = {x: 5, y: 0};
+    var panel = $('fp-panel', document), deck = $('fbPanelBar2', document).deck, browser = $('fp-panel-browser', document);
     
     var clientOffset = getClientOffset(colorCell), offsetSize = getOffsetSize(colorCell),
         deckSize  = {height: deck.clientHeight, width: deck.clientWidth}
