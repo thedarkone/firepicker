@@ -150,10 +150,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     var colorValues = [], cssValue;
     for (var i = 0, len = cssValues.length; i < len; i++) {
       cssValue = cssValues[i];
-      if (cssValue.type == 'rgb' || isColorKeyword(cssValue.value)) {
-        cssValue.value = rgbToHex(cssValue.value);
-        colorValues.push(cssValue);
-      }
+      if (cssValue.type == 'rgb' || isColorKeyword(cssValue.value)) { colorValues.push(cssValue); }
     }
     return colorValues;
   },
