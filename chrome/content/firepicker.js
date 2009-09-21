@@ -239,15 +239,6 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     }
   },
   
-  getPickerDialogFrom: function(container, color) {
-    var dialog = $('firepicker_dialog', container.ownerDocument);
-    if (!dialog) {
-      dialog = this.tags.pickerDialog.append({bgColor: color}, container);
-      dialog.setAttribute('id', 'firepicker_dialog');
-    }
-    return dialog;
-  },
-  
   addColorsDropDownStyleSheet: function(doc) {
     if (!$('firePickerStyle', doc)) {
       var styleSheet = createStyleSheet(doc, 'chrome://firepicker/skin/css-attribute-dialog.css');
