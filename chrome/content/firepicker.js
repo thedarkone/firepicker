@@ -132,23 +132,15 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   },
   
   hookIntoCSSEditor: function(editor) {
-    try {
-      if (!editor._firePanelCapable) {
-        var self = this, originalShow = editor.show, originalOnInput = editor.onInput;
-        editor.show = function(target, panel, value, targetSize) {
-          try {
-            var result = originalShow.apply(this, arguments);
-            self.handleValueChangeInEditor(this, value);
-            this.input.addEventListener('input', function() {self.handleValueChangeInEditor(editor, this.value);}, false);
-            return result;
-          } catch(e) {
-            self.log(e);
-          }
-        };
-        editor._firePanelCapable = true;
-      }
-    } catch(e) {
-      alert(e);
+    if (!editor._firePanelCapable) {
+      var self = this, originalShow = editor.show, originalOnInput = editor.onInput;
+      editor.show = function(target, panel, value, targetSize) {
+        var result = originalShow.apply(this, arguments);
+        self.handleValueChangeInEditor(this, value);
+        this.input.addEventListener('input', function() {self.handleValueChangeInEditor(editor, this.value);}, false);
+        return result;
+      };
+      editor._firePanelCapable = true;
     }
   },
   
@@ -189,18 +181,14 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
       newEl = this.tags.colorValue.append({color: colorValue.value}, dropDownContainer);
       colors.push(colorValue.value);
       newEl.addEventListener('mousedown', function(e) {
-        try {
-          cancelEvent(e);
-          var input = editorBox.querySelector('input'), value = input.value;
-          self.openColorPickerPopUp(newEl, colorValue.value, function(newValue) {
-            input.value                 = value.substring(0, colorValue.start) + newValue + value.substring(colorValue.end + 1);
-            newEl.firstChild.innerHTML  = newValue;
-            newEl.style.backgroundColor = newValue;
-            Firebug.Editor.update(true);
-          });
-        } catch(e) {
-          self.log(e);
-        }
+        cancelEvent(e);
+        var input = editorBox.querySelector('input'), value = input.value;
+        self.openColorPickerPopUp(newEl, colorValue.value, function(newValue) {
+          input.value                 = value.substring(0, colorValue.start) + newValue + value.substring(colorValue.end + 1);
+          newEl.firstChild.innerHTML  = newValue;
+          newEl.style.backgroundColor = newValue;
+          Firebug.Editor.update(true);
+        });
       }, true);
     }
     dropDownContainer.style.display = colorValues.length == 0 ? 'none' : 'block';
@@ -218,15 +206,11 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   },
   
   hookIntoCSSPanel: function() {
-    try {
-      var self = this, stylesheetPanelPrototype = Firebug.getPanelType('css').prototype, original = stylesheetPanelPrototype.getEditor;
-      stylesheetPanelPrototype.getEditor = function() {
-        var result = original.apply(this, arguments);
-        if (this.editor) { self.hookIntoCSSEditor(this.editor); }
-        return result;
-      }
-    } catch(e) {
-      alert(e);
+    var self = this, stylesheetPanelPrototype = Firebug.getPanelType('css').prototype, original = stylesheetPanelPrototype.getEditor;
+    stylesheetPanelPrototype.getEditor = function() {
+      var result = original.apply(this, arguments);
+      if (this.editor) { self.hookIntoCSSEditor(this.editor); }
+      return result;
     }
   },
   
@@ -271,16 +255,10 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   },
   
   addStyleSheet: function(doc) {
-    try {
-      if (!$('firePickerStyle', doc)) {
-        var styleSheet = createStyleSheet(doc, 'chrome://firepicker/skin/css-attribute-dialog.css');
-        styleSheet.setAttribute('id', 'firePickerStyle');
-        addStyleSheet(doc, styleSheet);
-        this.styleSheet = styleSheet;
-        this.log(styleSheet);
-      }
-    } catch(e) {
-      this.log(e);
+    if (!$('firePickerStyle', doc)) {
+      var styleSheet = createStyleSheet(doc, 'chrome://firepicker/skin/css-attribute-dialog.css');
+      styleSheet.setAttribute('id', 'firePickerStyle');
+      addStyleSheet(doc, styleSheet);
     }
   },
 });
