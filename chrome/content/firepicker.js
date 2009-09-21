@@ -155,25 +155,16 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     return colorValues;
   },
   
-  isWithColorWord: function(colorValue) {
-    var value = colorValue.value.toLowerCase(), rgbValue = colorNames[value];
-    if (rgbValue) {
-      colorValue.value = '#' + rgbValue;
-      return true;
-    }
-  },
-  
   updateEditorColorDropDown: function(editorBox, colorValues) {
     var dropDownContainer = editorBox._colorsDropDown;
     if (!dropDownContainer) {
       dropDownContainer = editorBox._colorsDropDown = this.tags.colorValuesContainer.insertAfter({}, getChildByClass(editorBox, 'textEditorInner1'));
     }
     eraseNode(dropDownContainer);
-    var colorValue, newEl, self = this, colors = [];
+    var colorValue, newEl, self = this;
     for (var i = 0, len = colorValues.length; i < len; i++) {
       colorValue = colorValues[i];
       newEl = this.tags.colorValue.append({color: colorValue.value}, dropDownContainer);
-      colors.push(colorValue.value);
       newEl.addEventListener('mousedown', function(e) {
         cancelEvent(e);
         var input = editorBox.querySelector('input'), value = input.value;
@@ -227,9 +218,6 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     if (!dialog) {
       dialog = this.tags.pickerDialog.append({bgColor: color}, container);
       dialog.setAttribute('id', 'firepicker_dialog');
-      var self = this;
-      dialog.addEventListener('mousedown', function(){self.log('yeaaah! true');}, true);
-      dialog.addEventListener('mousedown', function(){self.log('yeaaah! false');}, false);
     }
     return dialog;
   },
