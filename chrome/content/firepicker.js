@@ -291,19 +291,6 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
       this.log(e);
     }
   },
-  
-  // reattachContext: function(browser, context) {
-  //   try {
-  //     var panel = context.getPanel('firepicker');
-  //     this.addStyleSheet(panel.document);
-  //   } catch(e) {
-  //     this.log(e);
-  //   }
-  // },
-  
-  onAboutButton: function(context) {
-    alert('FirePicker extension by thedarkone');
-  }
 });
 
 
