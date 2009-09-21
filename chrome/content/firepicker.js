@@ -127,7 +127,6 @@ ColorsDropDown.prototype = {
     if (!this.listContainer) {
       this.listContainer = this.tags.container.insertAfter({}, getChildByClass(this.editor.box, 'textEditorInner1'));
       this.addStylesheet(this.listContainer.ownerDocument);
-      this.firepicker.log(this.listContainer);
     }
     return this.listContainer;
   },
