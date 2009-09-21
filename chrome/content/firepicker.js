@@ -143,7 +143,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   
   handleValueChangeInEditor: function(editor, newValue) {
     this.addStyleSheet(editor.box.ownerDocument);
-    this.updateEditorColorDropDown(editor.box, this.filterColorValues(splitCSSValues(newValue)));
+    this.updateEditorColorDropDown(editor, editor.box, this.filterColorValues(splitCSSValues(newValue)));
   },
   
   filterColorValues: function(cssValues) {
@@ -155,28 +155,36 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     return colorValues;
   },
   
-  updateEditorColorDropDown: function(editorBox, colorValues) {
+  updateEditorColorDropDown: function(editor, editorBox, colorValues) {
     var dropDownContainer = editorBox._colorsDropDown;
     if (!dropDownContainer) {
       dropDownContainer = editorBox._colorsDropDown = this.tags.colorValuesContainer.insertAfter({}, getChildByClass(editorBox, 'textEditorInner1'));
     }
     eraseNode(dropDownContainer);
-    var colorValue, newEl, self = this;
+    var colorValue, newEl;
     for (var i = 0, len = colorValues.length; i < len; i++) {
       colorValue = colorValues[i];
       newEl = this.tags.colorValue.append({color: colorValue.value}, dropDownContainer);
-      newEl.addEventListener('mousedown', function(e) {
-        cancelEvent(e);
-        var input = editorBox.querySelector('input'), value = input.value;
-        self.openColorPickerPopUp(newEl, colorValue.value, function(newValue) {
-          input.value                 = value.substring(0, colorValue.start) + newValue + value.substring(colorValue.end + 1);
-          newEl.firstChild.innerHTML  = newValue;
-          newEl.style.backgroundColor = newValue;
-          Firebug.Editor.update(true);
-        });
-      }, true);
+      this.addMousedownCallbackToColorCell(editor, newEl, colorValue);
     }
     dropDownContainer.style.display = colorValues.length == 0 ? 'none' : 'block';
+  },
+  
+  addMousedownCallbackToColorCell: function(editor, dropDownColorCell, colorValue) {
+    var self = this;
+    dropDownColorCell.addEventListener('mousedown', function(e) {
+      cancelEvent(e);
+      self.openColorPickerPopUp(editor, dropDownColorCell, colorValue.value, function(newValue) {
+        if (colorValue._prefix === undefined) {
+          colorValue._prefix = editor.input.value.substring(0, colorValue.start);
+          colorValue._suffix = editor.input.value.substring(colorValue.end + 1);
+        }
+        editor.input.value = colorValue._prefix + newValue + colorValue._suffix;
+        dropDownColorCell.firstChild.innerHTML  = newValue;
+        dropDownColorCell.style.backgroundColor = newValue;
+        Firebug.Editor.update(true);
+      });
+    }, true);
   },
   
   hookIntoCSSPanel: function() {
@@ -188,7 +196,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     }
   },
   
-  openColorPickerPopUp: function(colorCell, color, callback) {
+  openColorPickerPopUp: function(editor, colorCell, color, callback) {
     var panel = $('fp-panel', document), deck = $('fbPanelBar2', document).deck, browser = $('fp-panel-browser', document);
     
     var clientOffset = getClientOffset(colorCell), offsetSize = getOffsetSize(colorCell),
@@ -196,7 +204,13 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
         popUpSize = {height: browser.getAttribute('height'), width: browser.getAttribute('width')};
 
     var y = Math.min(clientOffset.y - ((popUpSize.height - colorCell.clientHeight) / 2), deckSize.height - popUpSize.height)
+    var self = this;
     
+    panel.addEventListener('popuphidden', function() {
+      self.handleValueChangeInEditor(editor, editor.input.value);
+      this.removeEventListener('popuphidden', arguments.callee, false);
+    }, false);
+        
     panel.openPopup(deck, "overlap", clientOffset.x + colorCell.clientWidth, y, false, true);
     color = this.fixColor(color);
     setTimeout(function() {browser.contentDocument.initColorPicker(color, callback); }, 50);
