@@ -166,24 +166,32 @@ ColorsDropDown.prototype = {
   
   addColorCell: function(container, colorValue) {
     var newCell = this.tags.valueCell.append({color: colorValue.value}, container);
-    this.addCellMousedownCallback(newCell, colorValue);
+    newCell.colorValue = colorValue;
+    newCell.dropDown   = this;
+    newCell.addEventListener('mousedown', this.cellMousedown, false);
   },
   
-  addCellMousedownCallback: function(colorCell, colorValue) {
-    var self = this;
-    colorCell.addEventListener('mousedown', function(e) {
-      cancelEvent(e);
-      self.firepicker.openPopup(self.editor, colorCell, colorValue.value, function(newValue) {
-        if (colorValue._prefix === undefined) {
-          colorValue._prefix = self.editor.input.value.substring(0, colorValue.start);
-          colorValue._suffix = self.editor.input.value.substring(colorValue.end + 1);
-        }
-        self.editor.input.value = colorValue._prefix + newValue + colorValue._suffix;
-        colorCell.firstChild.innerHTML  = newValue;
-        colorCell.style.backgroundColor = newValue;
-        Firebug.Editor.update(true);
-      });
-    }, true);
+  cellMousedown: function(e) {
+    cancelEvent(e);
+
+    var input = this.dropDown.editor.input, text = this.firstChild, style = this.style, colorValue = this.colorValue;
+    
+    colorValue = extend(colorValue, {
+      prefix: input.value.substring(0, colorValue.start),
+      suffix: input.value.substring(colorValue.end + 1)
+    });
+
+    this.dropDown.openPopup(this, function(newValue) {
+      input.value           = colorValue.prefix + newValue + colorValue.suffix;
+      text.innerHTML        = newValue;
+      style.backgroundColor = newValue;
+
+      Firebug.Editor.update(true);
+    });
+  },
+  
+  openPopup: function(colorCell, callback) {
+    this.firepicker.openPopup(this.editor, colorCell, colorCell.colorValue.value, callback);
   }
 };
 
