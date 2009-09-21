@@ -132,8 +132,8 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
       editor.show = function(target, panel, value, targetSize) {
         var result = originalShow.apply(this, arguments);
         
-        self.handleValueChangeInEditor(this, value);
-        this.input.addEventListener('input', function() { self.handleValueChangeInEditor(editor, this.value); }, false);
+        self.handleValueChangeInEditor(this);
+        this.input.addEventListener('input', function() { self.handleValueChangeInEditor(editor); }, false);
         
         return result;
       };
@@ -141,9 +141,9 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     }
   },
   
-  handleValueChangeInEditor: function(editor, newValue) {
+  handleValueChangeInEditor: function(editor) {
     this.addStyleSheet(editor.box.ownerDocument);
-    this.updateEditorColorDropDown(editor, editor.box, this.filterColorValues(splitCSSValues(newValue)));
+    this.updateEditorColorDropDown(editor, editor.box, this.filterColorValues(splitCSSValues(editor.input.value)));
   },
   
   filterColorValues: function(cssValues) {
@@ -222,7 +222,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
       var self = this;
       this.colorPickerPopup = $('fp-panel', document);
       this.colorPickerPopup.addEventListener('popuphidden', function() {
-        if (this.cssEditor) { self.handleValueChangeInEditor(this.cssEditor, this.cssEditor.input.value); }
+        if (this.cssEditor) { self.handleValueChangeInEditor(this.cssEditor); }
       }, false);
     }
     return this.colorPickerPopup;
