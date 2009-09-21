@@ -263,7 +263,6 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     if (!dialog) {
       dialog = this.tags.pickerDialog.append({bgColor: color}, container);
       dialog.setAttribute('id', 'firepicker_dialog');
-      // dialog.addEventListener('mousedown', bind(this.onCreateColorPicker, this), true);
       var self = this;
       dialog.addEventListener('mousedown', function(){self.log('yeaaah! true');}, true);
       dialog.addEventListener('mousedown', function(){self.log('yeaaah! false');}, false);
@@ -271,14 +270,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     return dialog;
   },
   
-  onCreateColorPicker: function(e) {
-    var clickedColorElement = e.target, colorValue = clickedColorElement.colorValue;
-    this.log('clicked: ');
-    this.log(colorValue);
-  },
-  
   addStyleSheet: function(doc) {
-    // Make sure the stylesheet isn't appended twice.
     try {
       if (!$('firePickerStyle', doc)) {
         var styleSheet = createStyleSheet(doc, 'chrome://firepicker/skin/css-attribute-dialog.css');
