@@ -197,23 +197,29 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   },
   
   openColorPickerPopUp: function(editor, colorCell, color, callback) {
-    var panel = $('fp-panel', document), deck = $('fbPanelBar2', document).deck, browser = $('fp-panel-browser', document);
-    
+    var panel = this.getColorPickerPopup(), deck = $('fbPanelBar2', document).deck, browser = $('fp-panel-browser', document);
+
     var clientOffset = getClientOffset(colorCell), offsetSize = getOffsetSize(colorCell),
         deckSize  = {height: deck.clientHeight, width: deck.clientWidth}
         popUpSize = {height: browser.getAttribute('height'), width: browser.getAttribute('width')};
 
     var y = Math.min(clientOffset.y - ((popUpSize.height - colorCell.clientHeight) / 2), deckSize.height - popUpSize.height)
     var self = this;
-    
-    panel.addEventListener('popuphidden', function() {
-      self.handleValueChangeInEditor(editor, editor.input.value);
-      this.removeEventListener('popuphidden', arguments.callee, false);
-    }, false);
-        
+
+    panel.cssEditor = editor;
     panel.openPopup(deck, "overlap", clientOffset.x + colorCell.clientWidth, y, false, true);
     color = this.fixColor(color);
     setTimeout(function() {browser.contentDocument.initColorPicker(color, callback); }, 50);
+  },
+  
+  getColorPickerPopup: function() {
+    if (!this.colorPickerPopup) {
+      this.colorPickerPopup = $('fp-panel', document);
+      this.colorPickerPopup.addEventListener('popuphidden', function() {
+        if (this.cssEditor) { self.handleValueChangeInEditor(this.cssEditor, this.cssEditor.input.value); }
+      }, false);
+    }
+    return this.colorPickerPopup;
   },
   
   fixColor: function(color) {
