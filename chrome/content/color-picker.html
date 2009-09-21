@@ -209,12 +209,13 @@
             return val < min ? min : (val > max ? max : val);
           }
         };
+        
         document.initColorPicker = function(color, callback) {
           if (!window.colorPicker) {
-            window.colorPicker = new ColorPicker(document.getElementById('picker'), color, callback);
+            colorPicker = new ColorPicker(document.getElementById('picker'), color, callback);
           } else {
-            window.colorPicker.callback = callback;
-            window.colorPicker.setColor(color);
+            colorPicker.callback = callback;
+            colorPicker.setColor(color);
           }
         };
       </script>
