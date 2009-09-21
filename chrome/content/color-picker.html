@@ -171,13 +171,8 @@
           },
 
           mouseUp: function(e) {
-            try {
-              // console.log('mouse up');
-              this.mouseMove(e);
-              this.sbDrag = this.hueDrag = false
-            } catch(e) {
-              alert(e);
-            }
+            this.mouseMove(e);
+            this.sbDrag = this.hueDrag = false
           },
 
           setColor: function(html) {
