@@ -51,15 +51,6 @@ var colorNames = {
   yellow: "ffff00", yellowgreen: "9acd32"
 };
 
-var cumulativeOffset = function(element) {
-  var top = 0, left = 0;
-  do {
-    top  += element.offsetTop  || 0;
-    left += element.offsetLeft || 0;
-  } while (element = element.offsetParent);
-  return {left: left, top: top};
-};
-
 var reSplitCSS = /(url\("?[^"\)]+?"?\))|(rgb\(.*?\))|(#[\dA-Fa-f]+)|(-?\d+(\.\d+)?(%|[a-z]{1,2})?)|([^,\s]+)|"(.*?)"/;
 
 function parseCSSValue(value, offset) {
@@ -219,9 +210,9 @@ Popup.prototype = {
   },
   
   computePosition: function(colorCell, deck, browser) {
-    var clientOffset = getClientOffset(colorCell), offsetSize = getOffsetSize(colorCell),
-        deckSize  = {height: deck.clientHeight, width: deck.clientWidth}
-        popUpSize = {height: browser.getAttribute('height'), width: browser.getAttribute('width')};
+    var clientOffset = getClientOffset(colorCell),
+        deckSize     = {height: deck.clientHeight, width: deck.clientWidth}
+        popUpSize    = {height: browser.getAttribute('height'), width: browser.getAttribute('width')};
 
     return {
       x: clientOffset.x + colorCell.clientWidth,
