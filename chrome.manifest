@@ -1,0 +1,3 @@
+content		firepicker		chrome/content/ xpcnativewrappers=no
+overlay		chrome://firebug/content/firebugOverlay.xul		chrome://firepicker/content/firepicker.xul
+skin    firepicker  classic/1.0 chrome/skin/classic/

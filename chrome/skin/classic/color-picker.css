@@ -1,0 +1,46 @@
+body {
+  margin: 0px;
+  background-color: white;
+  overflow: hidden;
+}
+.fire_picker_dialog {
+  padding: 9px;
+  background-color: #b0e0e6;
+  color: #000;
+  z-index: 10;
+  overflow: hidden;
+}
+.fire_picker_dialog .picker {
+  float: left; 
+}
+.fire_picker_dialog .picker .saturation_brightness, .fire_picker_dialog .picker .hue {
+  border: 1px solid #6fc3dd;
+  position: relative; 
+}
+.fire_picker_dialog .picker .saturation_brightness {
+  float: left;
+  width: 180px;
+  height: 180px;
+  background-image: url("picker_bg.png");
+  margin-right: 5px; 
+}
+.fire_picker_dialog .picker .saturation_brightness img {
+  left: 0px;
+  margin-left: -5px;
+  margin-top: -5px; 
+}
+.fire_picker_dialog .picker .hue {
+  float: left;
+  width: 12px;
+  height: 181px;
+  background-image: url("hue_bg.png");
+  margin-right: 10px; 
+}
+.fire_picker_dialog .picker .hue img {
+  right: -10px;
+  margin-top: -6px; 
+}
+.fire_picker_dialog .picker img {
+  position: absolute;
+  top: 0px; 
+}

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<RDF:RDF xmlns:em="http://www.mozilla.org/2004/em-rdf#"
+         xmlns:NC="http://home.netscape.com/NC-rdf#"
+         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <RDF:Description RDF:about="rdf:#$41y0G2"
+                   em:id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
+                   em:minVersion="1"
+                   em:maxVersion="3.*" />
+  <RDF:Description RDF:about="urn:mozilla:install-manifest"
+                   em:id="thedarkone2@gmail.com"
+                   em:name="FirePicker"
+                   em:version="1.0"
+                   em:creator="thedarkone; http://www.example.org"
+                   em:description="Color Picker for Firebug"
+                   em:homepageURL="http://www.example.com"
+                   em:iconURL="chrome://firepicker/content/icon.png">
+    <em:targetApplication RDF:resource="rdf:#$41y0G2"/>
+  </RDF:Description>
+</RDF:RDF>

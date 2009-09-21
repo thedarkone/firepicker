@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript" src="chrome://firepicker/content/firepicker.js"/>
+
+  <popupset>
+    <panel id="fp-panel">
+      <browser id="fp-panel-browser" disablehistory="true" flex="1" width="229" height="201" src="chrome://firepicker/content/color-picker.html" />
+    </panel>
+  </popupset>
+
+</overlay>
