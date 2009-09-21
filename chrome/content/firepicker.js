@@ -219,6 +219,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   
   getColorPickerPopup: function() {
     if (!this.colorPickerPopup) {
+      var self = this;
       this.colorPickerPopup = $('fp-panel', document);
       this.colorPickerPopup.addEventListener('popuphidden', function() {
         if (this.cssEditor) { self.handleValueChangeInEditor(this.cssEditor, this.cssEditor.input.value); }
