@@ -142,7 +142,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   },
   
   handleValueChangeInEditor: function(editor) {
-    this.addStyleSheet(editor.box.ownerDocument);
+    this.addColorsDropDownStyleSheet(editor.box.ownerDocument);
     this.updateEditorColorDropDown(editor, editor.box, this.filterColorValues(splitCSSValues(editor.input.value)));
   },
   
@@ -248,7 +248,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     return dialog;
   },
   
-  addStyleSheet: function(doc) {
+  addColorsDropDownStyleSheet: function(doc) {
     if (!$('firePickerStyle', doc)) {
       var styleSheet = createStyleSheet(doc, 'chrome://firepicker/skin/css-attribute-dialog.css');
       styleSheet.setAttribute('id', 'firePickerStyle');
