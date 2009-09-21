@@ -1,5 +1,6 @@
 FBL.ns(function() { with (FBL) {
 
+// list taken from FirePalette (http://blog.endflow.net/?p=143)
 var colorNames = {
   aliceblue: "f0f8ff", antiquewhite: "faebd7", aqua: "00ffff",
   aquamarine: "7fffd4", azure: "f0ffff", beige: "f5f5dc",
@@ -51,6 +52,7 @@ var colorNames = {
   yellow: "ffff00", yellowgreen: "9acd32"
 };
 
+// taken from Firebug | css.js
 var reSplitCSS = /(url\("?[^"\)]+?"?\))|(rgb\(.*?\))|(#[\dA-Fa-f]+)|(-?\d+(\.\d+)?(%|[a-z]{1,2})?)|([^,\s]+)|"(.*?)"/;
 
 function parseCSSValue(value, offset) {
@@ -83,6 +85,13 @@ function parseCSSValue(value, offset) {
   }
 }
 
+function rgbToHex(value) {
+  return value.replace(/\brgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)/gi, function(_, r, g, b) {
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + (b << 0)).toString(16).substr(-6).toUpperCase();
+  });
+}
+// end of firebug helpers
+
 var splitCSSValues = function(cssValue) {
   var offset = 0, cssValues = [], cssValueLength = cssValue.length, nextValue = parseCSSValue(cssValue, offset), previousValue;
   while (nextValue) {
@@ -94,11 +103,6 @@ var splitCSSValues = function(cssValue) {
   return cssValues;
 };
 
-function rgbToHex(value) {
-  return value.replace(/\brgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)/gi, function(_, r, g, b) {
-    return '#' + ((1 << 24) + (r << 16) + (g << 8) + (b << 0)).toString(16).substr(-6).toUpperCase();
-  });
-}
 
 var ColorsDropDown = function(editor, firepicker) {
   this.editor     = editor;
