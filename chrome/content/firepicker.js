@@ -182,7 +182,7 @@ ColorsDropDown.prototype = {
     var self = this;
     colorCell.addEventListener('mousedown', function(e) {
       cancelEvent(e);
-      self.firepicker.openColorPickerPopUp(self.editor, colorCell, colorValue.value, function(newValue) {
+      self.firepicker.openPopup(self.editor, colorCell, colorValue.value, function(newValue) {
         if (colorValue._prefix === undefined) {
           colorValue._prefix = self.editor.input.value.substring(0, colorValue.start);
           colorValue._suffix = self.editor.input.value.substring(colorValue.end + 1);
@@ -196,8 +196,43 @@ ColorsDropDown.prototype = {
   }
 };
 
+var Popup = function() {};
+
+Popup.prototype = {
+  getPanel: function() {
+    if (!this.panel) {
+      this.panel = $('fp-panel', document);
+      this.panel.addEventListener('popuphidden', function() {
+        if (this.cssEditor && this.cssEditor.colorsDropDown) { this.cssEditor.colorsDropDown.onValueChange(); }
+      }, false);
+    }
+    return this.panel;
+  },
+  
+  open: function(editor, colorCell, color, callback) {
+    var panel = this.getPanel(), deck = $('fbPanelBar2', document).deck, browser = $('fp-panel-browser', document),
+        position = this.computePosition(colorCell, deck, browser);
+    
+    panel.cssEditor = editor;
+    panel.openPopup(deck, "overlap", position.x, position.y, false, true);
+    setTimeout(function() {browser.contentDocument.initColorPicker(color, callback); }, 50);
+  },
+  
+  computePosition: function(colorCell, deck, browser) {
+    var clientOffset = getClientOffset(colorCell), offsetSize = getOffsetSize(colorCell),
+        deckSize  = {height: deck.clientHeight, width: deck.clientWidth}
+        popUpSize = {height: browser.getAttribute('height'), width: browser.getAttribute('width')};
+
+    return {
+      x: clientOffset.x + colorCell.clientWidth,
+      y: Math.min(clientOffset.y - ((popUpSize.height - colorCell.clientHeight) / 2), deckSize.height - popUpSize.height)
+    };
+  }
+};
+
 Firebug.FirepickerModel = extend(Firebug.Module, {
   ColorsDropDown: ColorsDropDown,
+  Popup: Popup,
   
   enable: function() {
     if (!this.initialized) { this.initialize(); }
@@ -230,30 +265,9 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     }
   },
   
-  openColorPickerPopUp: function(editor, colorCell, color, callback) {
-    var panel = this.getColorPickerPopup(), deck = $('fbPanelBar2', document).deck, browser = $('fp-panel-browser', document);
-
-    var clientOffset = getClientOffset(colorCell), offsetSize = getOffsetSize(colorCell),
-        deckSize  = {height: deck.clientHeight, width: deck.clientWidth}
-        popUpSize = {height: browser.getAttribute('height'), width: browser.getAttribute('width')};
-
-    var y = Math.min(clientOffset.y - ((popUpSize.height - colorCell.clientHeight) / 2), deckSize.height - popUpSize.height)
-    var self = this;
-
-    panel.cssEditor = editor;
-    panel.openPopup(deck, "overlap", clientOffset.x + colorCell.clientWidth, y, false, true);
-    color = this.fixColor(color);
-    setTimeout(function() {browser.contentDocument.initColorPicker(color, callback); }, 50);
-  },
-  
-  getColorPickerPopup: function() {
-    if (!this.colorPickerPopup) {
-      this.colorPickerPopup = $('fp-panel', document);
-      this.colorPickerPopup.addEventListener('popuphidden', function() {
-        if (this.cssEditor && this.cssEditor.colorsDropDown) { this.cssEditor.colorsDropDown.onValueChange(); }
-      }, false);
-    }
-    return this.colorPickerPopup;
+  openPopup: function(editor, colorCell, color, callback) {
+    if (!this.colorPickerPopup) { this.colorPickerPopup = new Popup(); }
+    this.colorPickerPopup.open(editor, colorCell, this.fixColor(color), callback);
   },
   
   fixColor: function(color) {
