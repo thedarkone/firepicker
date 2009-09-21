@@ -156,18 +156,23 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   },
   
   updateEditorColorDropDown: function(editor, editorBox, colorValues) {
-    var dropDownContainer = editorBox._colorsDropDown;
-    if (!dropDownContainer) {
-      dropDownContainer = editorBox._colorsDropDown = this.tags.colorValuesContainer.insertAfter({}, getChildByClass(editorBox, 'textEditorInner1'));
-    }
+    var dropDownContainer = this.getColorDropDownContainer(editorBox), colorValue, newEl;
     eraseNode(dropDownContainer);
-    var colorValue, newEl;
+
     for (var i = 0, len = colorValues.length; i < len; i++) {
       colorValue = colorValues[i];
       newEl = this.tags.colorValue.append({color: colorValue.value}, dropDownContainer);
       this.addMousedownCallbackToColorCell(editor, newEl, colorValue);
     }
+    
     dropDownContainer.style.display = colorValues.length == 0 ? 'none' : 'block';
+  },
+  
+  getColorDropDownContainer: function(editorBox) {
+    if (!editorBox._colorsDropDown) {
+      editorBox._colorsDropDown = this.tags.colorValuesContainer.insertAfter({}, getChildByClass(editorBox, 'textEditorInner1'));
+    }
+    return editorBox._colorsDropDown;
   },
   
   addMousedownCallbackToColorCell: function(editor, dropDownColorCell, colorValue) {
