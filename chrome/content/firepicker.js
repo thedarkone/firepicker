@@ -109,41 +109,52 @@ function rgbToHex(value) {
   });
 }
 
-Firebug.FirepickerModel = extend(Firebug.Module, {
+var ColorsDropDown = function(editor, firepicker) {
+  this.editor     = editor;
+  this.firepicker = firepicker;
+};
+
+ColorsDropDown.prototype = {
   tags: domplate({
-    colorValuesContainer: DIV({'class': 'firepicker_color_container'}),
-    colorValue: DIV({'class': 'color_value', style: 'background-color: $color;'},
+    container: DIV({'class': 'firepicker_color_container'}),
+    valueCell: DIV({'class': 'color_value', style: 'background-color: $color;'},
       DIV({'class': 'css_text'}, '$color')
     )
   }),
   
-  enable: function() {
-    if (!this.initialized) { this.initialize(); }
-  },
-
-  initialize: function() {
-    this.hookIntoCSSPanel();
-    this.initialized = true;
+  editorShown: function() {
+    this.onValueChange();
+    this.attachInputChangeHandler();
   },
   
-  hookIntoCSSEditor: function(editor) {
-    if (!editor._firePanelCapable) {
-      var self = this, originalShow = editor.show;
-      editor.show = function(target, panel, value, targetSize) {
-        var result = originalShow.apply(this, arguments);
-        
-        self.handleValueChangeInEditor(this);
-        this.input.addEventListener('input', function() { self.handleValueChangeInEditor(editor); }, false);
-        
-        return result;
-      };
-      editor._firePanelCapable = true;
+  attachInputChangeHandler: function() {
+    if (!this.boundOnValueChange) { this.boundOnValueChange = bind(this.onValueChange, this); }
+    this.editor.input.addEventListener('input', this.boundOnValueChange, false);
+  },
+  
+  getListContainer: function() {
+    if (!this.listContainer) {
+      this.listContainer = this.tags.container.insertAfter({}, getChildByClass(this.editor.box, 'textEditorInner1'));
+      this.addStylesheet(this.listContainer.ownerDocument);
+      this.firepicker.log(this.listContainer);
+    }
+    return this.listContainer;
+  },
+  
+  addStylesheet: function(doc) {
+    if (!$('firepickerDropDownStyle', doc)) {
+      var styleSheet = createStyleSheet(doc, 'chrome://firepicker/skin/css-attribute-dialog.css');
+      styleSheet.setAttribute('id', 'firepickerDropDownStyle');
+      addStyleSheet(doc, styleSheet);
     }
   },
   
-  handleValueChangeInEditor: function(editor) {
-    this.addColorsDropDownStyleSheet(editor.box.ownerDocument);
-    this.updateEditorColorDropDown(editor, editor.box, this.filterColorValues(splitCSSValues(editor.input.value)));
+  onValueChange: function() {
+    this.updateList(this.getCSSColorValues());
+  },
+  
+  getCSSColorValues: function() {
+    return this.filterColorValues(splitCSSValues(this.editor.input.value));
   },
   
   filterColorValues: function(cssValues) {
@@ -155,41 +166,59 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     return colorValues;
   },
   
-  updateEditorColorDropDown: function(editor, editorBox, colorValues) {
-    var dropDownContainer = this.getColorDropDownContainer(editorBox), colorValue, newEl;
-    eraseNode(dropDownContainer);
-
-    for (var i = 0, len = colorValues.length; i < len; i++) {
-      colorValue = colorValues[i];
-      newEl = this.tags.colorValue.append({color: colorValue.value}, dropDownContainer);
-      this.addMousedownCallbackToColorCell(editor, newEl, colorValue);
-    }
-    
-    dropDownContainer.style.display = colorValues.length == 0 ? 'none' : 'block';
+  updateList: function(colorValues) {
+    var container = this.getListContainer();
+    eraseNode(container);
+    for (var i = 0, len = colorValues.length; i < len; i++) { this.addColorCell(container, colorValues[i]); }
+    container.style.display = colorValues.length == 0 ? 'none' : 'block';
   },
   
-  getColorDropDownContainer: function(editorBox) {
-    if (!editorBox._colorsDropDown) {
-      editorBox._colorsDropDown = this.tags.colorValuesContainer.insertAfter({}, getChildByClass(editorBox, 'textEditorInner1'));
-    }
-    return editorBox._colorsDropDown;
+  addColorCell: function(container, colorValue) {
+    var newCell = this.tags.valueCell.append({color: colorValue.value}, container);
+    this.addCellMousedownCallback(newCell, colorValue);
   },
   
-  addMousedownCallbackToColorCell: function(editor, dropDownColorCell, colorValue) {
+  addCellMousedownCallback: function(colorCell, colorValue) {
     var self = this;
-    dropDownColorCell.addEventListener('mousedown', function(e) {
+    colorCell.addEventListener('mousedown', function(e) {
       cancelEvent(e);
-      self.openColorPickerPopUp(editor, dropDownColorCell, colorValue.value, function(newValue) {
+      self.firepicker.openColorPickerPopUp(self.editor, colorCell, colorValue.value, function(newValue) {
         if (colorValue._prefix === undefined) {
-          colorValue._prefix = editor.input.value.substring(0, colorValue.start);
-          colorValue._suffix = editor.input.value.substring(colorValue.end + 1);
+          colorValue._prefix = self.editor.input.value.substring(0, colorValue.start);
+          colorValue._suffix = self.editor.input.value.substring(colorValue.end + 1);
         }
-        editor.input.value = colorValue._prefix + newValue + colorValue._suffix;
-        dropDownColorCell.firstChild.innerHTML  = newValue;
-        dropDownColorCell.style.backgroundColor = newValue;
+        self.editor.input.value = colorValue._prefix + newValue + colorValue._suffix;
+        colorCell.firstChild.innerHTML  = newValue;
+        colorCell.style.backgroundColor = newValue;
         Firebug.Editor.update(true);
       });
     }, true);
+  }
+};
+
+Firebug.FirepickerModel = extend(Firebug.Module, {
+  ColorsDropDown: ColorsDropDown,
+  
+  enable: function() {
+    if (!this.initialized) { this.initialize(); }
+  },
+
+  initialize: function() {
+    this.hookIntoCSSPanel();
+    this.initialized = true;
+  },
+  
+  hookIntoCSSEditor: function(editor) {
+    if (!editor.colorsDropDown) {
+      var originalShow = editor.show, self = this;
+
+      editor.colorsDropDown = new ColorsDropDown(editor, this);
+      editor.show = function() {
+        var result = originalShow.apply(this, arguments);
+        this.colorsDropDown.editorShown();
+        return result;
+      };
+    }
   },
   
   hookIntoCSSPanel: function() {
@@ -219,10 +248,9 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   
   getColorPickerPopup: function() {
     if (!this.colorPickerPopup) {
-      var self = this;
       this.colorPickerPopup = $('fp-panel', document);
       this.colorPickerPopup.addEventListener('popuphidden', function() {
-        if (this.cssEditor) { self.handleValueChangeInEditor(this.cssEditor); }
+        if (this.cssEditor && this.cssEditor.colorsDropDown) { this.cssEditor.colorsDropDown.onValueChange(); }
       }, false);
     }
     return this.colorPickerPopup;
@@ -237,18 +265,8 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     for (var len = arguments.length, i = 0; i < len; i++) {
       Firebug.Console.log(arguments[i]);
     }
-  },
-  
-  addColorsDropDownStyleSheet: function(doc) {
-    if (!$('firePickerStyle', doc)) {
-      var styleSheet = createStyleSheet(doc, 'chrome://firepicker/skin/css-attribute-dialog.css');
-      styleSheet.setAttribute('id', 'firePickerStyle');
-      addStyleSheet(doc, styleSheet);
-    }
-  },
+  }
 });
-
-
 
 Firebug.registerModule(Firebug.FirepickerModel);
 
