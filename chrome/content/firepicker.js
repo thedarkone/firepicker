@@ -128,11 +128,13 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   
   hookIntoCSSEditor: function(editor) {
     if (!editor._firePanelCapable) {
-      var self = this, originalShow = editor.show, originalOnInput = editor.onInput;
+      var self = this, originalShow = editor.show;
       editor.show = function(target, panel, value, targetSize) {
         var result = originalShow.apply(this, arguments);
+        
         self.handleValueChangeInEditor(this, value);
-        this.input.addEventListener('input', function() {self.handleValueChangeInEditor(editor, this.value);}, false);
+        this.input.addEventListener('input', function() { self.handleValueChangeInEditor(editor, this.value); }, false);
+        
         return result;
       };
       editor._firePanelCapable = true;
