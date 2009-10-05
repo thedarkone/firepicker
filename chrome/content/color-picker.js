@@ -163,7 +163,7 @@ ColorPicker.prototype = {
 
   mouseUp: function(e) {
     this.mouseMove(e);
-    this.sbDrag = this.hueDrag = false
+    this.sbDrag = this.hueDrag = false;
   },
 
   setColor: function(html) {
