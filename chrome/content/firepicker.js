@@ -129,7 +129,7 @@ ColorsDropDown.prototype = {
   
   getListContainer: function() {
     if (!this.listContainer) {
-      this.listContainer = this.tags.container.insertAfter({}, getChildByClass(this.editor.box, 'textEditorInner1'));
+      this.listContainer = this.tags.container.insertAfter({}, getChildByClass(this.editor.box, 'textEditorBottom1'));
       this.addStylesheet(this.listContainer.ownerDocument);
     }
     return this.listContainer;
