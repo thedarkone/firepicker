@@ -121,7 +121,7 @@ ColorPicker.prototype = {
   },
 
   setupBounds: function() {
-    var methodsToBind = ['sbMousedown', 'hueMousedown', 'mouseMove', 'mouseUp'], i = methodsToBind.length;
+    var methodsToBind = ['sbMousedown', 'hueMousedown', 'mouseMove', 'mouseUp', 'browserMouseUp'], i = methodsToBind.length;
     while(i--) { this[methodsToBind[i]] = bind(this[methodsToBind[i]], this); }
   },
 
@@ -130,6 +130,14 @@ ColorPicker.prototype = {
     this.huePicker.addEventListener('mousedown', this.hueMousedown, false);
     this.document.body.addEventListener('mousemove', this.mouseMove, false)
     this.document.body.addEventListener('mouseup', this.mouseUp, false);
+  },
+  
+  popUpOpened: function() {
+    globalBrowserDoc.addEventListener('mouseup', this.browserMouseUp, false);
+  },
+  
+  popUpClosed: function() {
+    globalBrowserDoc.removeEventListener('mouseup', this.browserMouseUp, false);
   },
 
   cumulativeOffsetWithBorders: function(element) {
@@ -163,7 +171,15 @@ ColorPicker.prototype = {
 
   mouseUp: function(e) {
     this.mouseMove(e);
+    this.notDragging();
+  },
+  
+  notDragging: function() {
     this.sbDrag = this.hueDrag = false;
+  },
+  
+  browserMouseUp: function() {
+    this.notDragging();
   },
 
   setColor: function(html) {
@@ -201,6 +217,10 @@ ColorPicker.prototype = {
   }
 };
 
+document.setGlobalBrowserDoc = function(globalBrowserDoc) {
+  window.globalBrowserDoc = globalBrowserDoc;
+};
+
 document.initColorPicker = function(color, callback) {
   if (!window.colorPicker) {
     colorPicker = new ColorPicker(document.getElementById('picker'), color, callback);
@@ -208,4 +228,9 @@ document.initColorPicker = function(color, callback) {
     colorPicker.callback = callback;
     colorPicker.setColor(color);
   }
+  colorPicker.popUpOpened();
+};
+
+document.popUpClosed = function() {
+  if (window.colorPicker) { colorPicker.popUpClosed(); }
 };

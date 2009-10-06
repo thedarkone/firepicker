@@ -203,21 +203,35 @@ var Popup = function() {};
 Popup.prototype = {
   getPanel: function() {
     if (!this.panel) {
-      this.panel = $('fp-panel', document);
-      this.panel.addEventListener('popuphidden', function() {
-        if (this.cssEditor && this.cssEditor.colorsDropDown) { this.cssEditor.colorsDropDown.onValueChange(); }
-      }, false);
+      this.panel                = $('fp-panel', document);
+      this.panel._pickerBrowser = this.panel.getElementsByTagName('browser')[0];
+      this.panel._pickerBrowser.contentDocument.setGlobalBrowserDoc(document);
+
+      this.panel.addEventListener('popupshown',  this.callbacks.popupshown,  false);
+      this.panel.addEventListener('popuphidden', this.callbacks.popuphidden, false);
     }
     return this.panel;
   },
   
-  open: function(editor, colorCell, color, callback) {
-    var panel = this.getPanel(), deck = $('fbPanelBar2', document).deck, browser = $('fp-panel-browser', document),
-        position = this.computePosition(colorCell, deck, browser);
+  callbacks: {
+    popuphidden: function() {
+      if (this._options) {
+        this._options.editor.colorsDropDown.onValueChange();
+        this._pickerBrowser.contentDocument.popUpClosed();
+        delete this._options;
+      }
+    },
     
-    panel.cssEditor = editor;
+    popupshown: function() {
+      if (this._options) { this._pickerBrowser.contentDocument.initColorPicker(this._options.color, this._options.callback); }
+    }
+  },
+  
+  open: function(editor, colorCell, color, callback) {
+    var panel = this.getPanel(), deck = $('fbPanelBar2', document).deck, position = this.computePosition(colorCell, deck, panel._pickerBrowser);
+    
+    panel._options = {editor: editor, color: color, callback: callback};
     panel.openPopup(deck, "overlap", position.x, position.y, false, true);
-    setTimeout(function() {browser.contentDocument.initColorPicker(color, callback); }, 50);
   },
   
   computePosition: function(colorCell, deck, browser) {
