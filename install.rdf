@@ -1,19 +1,19 @@
-<?xml version="1.0"?>
-<RDF:RDF xmlns:em="http://www.mozilla.org/2004/em-rdf#"
-         xmlns:NC="http://home.netscape.com/NC-rdf#"
-         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-  <RDF:Description RDF:about="rdf:#$41y0G2"
-                   em:id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}"
-                   em:minVersion="1"
-                   em:maxVersion="3.*" />
-  <RDF:Description RDF:about="urn:mozilla:install-manifest"
-                   em:id="thedarkone2@gmail.com"
-                   em:name="FirePicker"
-                   em:version="1.0"
-                   em:creator="thedarkone; http://www.example.org"
-                   em:description="Color Picker for Firebug"
-                   em:homepageURL="http://www.example.com"
-                   em:iconURL="chrome://firepicker/content/icon.png">
-    <em:targetApplication RDF:resource="rdf:#$41y0G2"/>
-  </RDF:Description>
-</RDF:RDF>
+<?xml version="1.0" encoding="UTF-8"?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>firepicker@thedarkone</em:id>
+    <em:type>2</em:type>
+    <em:name>Firepicker</em:name>
+    <em:version>1.0</em:version>
+    <em:creator>thedarkone; http://github.com/thedarkone</em:creator>
+    <em:contributor></em:contributor>
+    <em:description>Simple color picker plugin for Firebug.</em:description>
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id> <!-- Firefox -->
+        <em:minVersion>3.5</em:minVersion>
+        <em:maxVersion>3.5.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>
