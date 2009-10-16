@@ -1,0 +1,9 @@
+h1. Firepicker
+
+Simple color picker for Firebug.
+
+h2. Install
+
+Get the plugin from the official Firefox Add-on site: "https://addons.mozilla.org/en-US/firefox/addon/15032":https://addons.mozilla.org/en-US/firefox/addon/15032
+
+See more information and screenshots here: "http://thedarkone.github.com/firepicker":http://thedarkone.github.com/firepicker
