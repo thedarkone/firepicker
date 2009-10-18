@@ -1,6 +1,6 @@
-h1. Firepicker
+h1. Firepicker - color picker for Firebug
 
-Simple color picker for Firebug.
+Small plugin that adds color picker to Firebug.
 
 h2. Install
 
