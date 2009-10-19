@@ -233,18 +233,24 @@ Popup.prototype = {
 
     panel._options = {editor: editor, color: color, callback: callback};
     editor.openingColorPickerPopup();
-    panel.openPopup(deck, "overlap", position.x, position.y, false, true);
+    panel.openPopup(deck, 'at_pointer', position.x, position.y, false, true);
+  },
+  
+  aggregateScrollOffsetTop: function(element) {
+    var offset = 0;
+    while (element = getOverflowParent(element)) { offset += element.scrollTop; }
+    return offset;
   },
   
   computePosition: function(colorCell, deck, browser) {
-    var clientOffset = getClientOffset(colorCell),
-        deckSize     = {height: deck.clientHeight, width: deck.clientWidth}
-        popUpSize    = {height: browser.getAttribute('height'), width: browser.getAttribute('width')};
-
-    return {
-      x: clientOffset.x + colorCell.clientWidth,
-      y: Math.min(clientOffset.y - ((popUpSize.height - colorCell.clientHeight) / 2), deckSize.height - popUpSize.height)
-    };
+    var clientOffset      = getClientOffset(colorCell),
+        deckSize          = {height: deck.clientHeight, width: deck.clientWidth},
+        popUpSize         = {height: browser.getAttribute('height'), width: browser.getAttribute('width')},
+        scrollOffsetTop   = this.aggregateScrollOffsetTop(colorCell),
+        toCellFromTop     = clientOffset.y - scrollOffsetTop,
+        idealPopupShiftUp = (popUpSize.height - colorCell.clientHeight) / 2;
+    
+    return {x: clientOffset.x + colorCell.clientWidth, y: Math.min(toCellFromTop - idealPopupShiftUp, deckSize.height - popUpSize.height)};
   }
 };
 
