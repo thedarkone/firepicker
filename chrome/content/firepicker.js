@@ -216,6 +216,7 @@ Popup.prototype = {
   callbacks: {
     popuphidden: function() {
       if (this._options) {
+        this._options.editor.colorPickerClosed();
         this._options.editor.colorsDropDown.onValueChange();
         this._pickerBrowser.contentDocument.popUpClosed();
         delete this._options;
@@ -229,8 +230,9 @@ Popup.prototype = {
   
   open: function(editor, colorCell, color, callback) {
     var panel = this.getPanel(), deck = $('fbPanelBar2', document).deck, position = this.computePosition(colorCell, deck, panel._pickerBrowser);
-    
+
     panel._options = {editor: editor, color: color, callback: callback};
+    editor.openingColorPickerPopup();
     panel.openPopup(deck, "overlap", position.x, position.y, false, true);
   },
   
@@ -259,6 +261,20 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     this.initialized = true;
   },
   
+  editorExtensions: {
+    openingColorPickerPopup: function() {
+      // prevent Firebug from closing the editor in FF 3.7+ (where opening pop up "blurs" the editor's input)
+      this._enterOnBlurWas = this.enterOnBlur;
+      this.enterOnBlur     = false;
+    },
+    
+    colorPickerClosed: function() {
+      this.enterOnBlur = this._enterOnBlurWas;
+      var input        = this.input;
+      setTimeout(function() { input.focus(); }, 0); // return focus to the editor in FF 3.7+
+    }
+  },
+  
   hookIntoCSSEditor: function(editor) {
     if (!editor.colorsDropDown) {
       var originalShow = editor.show, self = this;
@@ -269,6 +285,9 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
         this.colorsDropDown.editorShown();
         return result;
       };
+      
+      editor.openingColorPickerPopup = this.editorExtensions.openingColorPickerPopup;
+      editor.colorPickerClosed       = this.editorExtensions.colorPickerClosed;
     }
   },
   
