@@ -17,7 +17,8 @@
 
 .firepicker_color_container .color_value .css_text  {
   background-color: #FFF;
-  padding: 0.1em 0.5em
+  padding: 0.1em 0.5em;
+  white-space: nowrap;
 }
 
 .firepicker_color_container .color_value:hover .css_text  {

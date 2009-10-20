@@ -19,11 +19,6 @@ var bind = function(fun, obj) {
 };
 
 var Color = {
-  rgbFloatToHex: function(floatNum) {
-    var CHARS = '0123456789ABCDEF', n256 = Math.round(floatNum * 255);
-    return CHARS.charAt((n256-n256%16)/16) + CHARS.charAt(n256%16);
-  },
-
   HSV2RGB: function(h, s, v) {
     if (h + 0.0000000001 >= 1) {h = 0}
     h *= 6;
@@ -44,7 +39,12 @@ var Color = {
         case 5: r=v; g=p; b=q; break;
     }
 
-    return '#' + this.rgbFloatToHex(r) + this.rgbFloatToHex(g) + this.rgbFloatToHex(b);
+    return {r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255)};
+  },
+  
+  HSV2RGBString: function(h, s, v) {
+    var rgb = this.HSV2RGB(h, s, v);
+    return 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')';
   },
 
   RGB2HSV: function(r, g, b) {
@@ -64,17 +64,6 @@ var Color = {
     }
 
     return {h: h / 6, s: s, v: v / 255};
-  },
-
-  HTML2RGB: function(html) {
-    var sliceParseHex = function(start, end) { return parseInt(html.slice(start, end), 16) * (end - start == 1 ? 17 : 1); };
-    return html.length == 4 ? {r: sliceParseHex(1,2), g: sliceParseHex(2,3), b: sliceParseHex(3,4)} :
-                              {r: sliceParseHex(1,3), g: sliceParseHex(3,5), b: sliceParseHex(5,7)}
-  },
-
-  HTML2HSV: function(html) {
-    var rgb = this.HTML2RGB(html);
-    return this.RGB2HSV(rgb.r, rgb.g, rgb.b);
   }
 };
 
@@ -182,8 +171,8 @@ ColorPicker.prototype = {
     this.notDragging();
   },
 
-  setColor: function(html) {
-    var hsv = html.match(/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})/) ? Color.HTML2HSV(html) : {h: this.h || 1, s: this.s || 1, v: this.v || 1};
+  setColor: function(rgb) {
+    var hsv = Color.RGB2HSV(rgb.r, rgb.g, rgb.b);
     this.setHue(Math.round(Math.abs(1 - hsv.h) * this.hueHeight));
     this.setSbPicker(this.sbHeight - Math.round(hsv.v * this.sbHeight), Math.round(hsv.s * this.sbWidth));
   },
@@ -192,7 +181,7 @@ ColorPicker.prototype = {
     top    = this.makeWithin(top, 0, this.hueHeight);
     this.h = (this.hueHeight - top) / this.hueHeight;
     this.hueHandle.style.top            = top + 'px';
-    this.sbPicker.style.backgroundColor = Color.HSV2RGB(this.h, 1, 1);
+    this.sbPicker.style.backgroundColor = Color.HSV2RGBString(this.h, 1, 1);
   },
 
   setSbPicker: function(top, left) {

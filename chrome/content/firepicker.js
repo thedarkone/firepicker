@@ -52,8 +52,9 @@ var colorNames = {
   yellow: "ffff00", yellowgreen: "9acd32"
 };
 
-// taken from Firebug | css.js
-var reSplitCSS = /(url\("?[^"\)]+?"?\))|(rgb\(.*?\))|(#[\dA-Fa-f]+)|(-?\d+(\.\d+)?(%|[a-z]{1,2})?)|([^,\s]+)|"(.*?)"/;
+
+// taken from Firebug | css.js, slightly tweaked to support rgba
+var reSplitCSS = /(url\("?[^"\)]+?"?\))|(rgba?\(.*?\))|(#[\dA-Fa-f]+)|(-?\d+(\.\d+)?(%|[a-z]{1,2})?)|([^,\s]+)|"(.*?)"/;
 
 function parseCSSValue(value, offset) {
   var start = 0;
@@ -84,12 +85,6 @@ function parseCSSValue(value, offset) {
     return {value: m[0], start: start+m.index, end: start+m.index+(m[0].length-1), type: type};
   }
 }
-
-function rgbToHex(value) {
-  return value.replace(/\brgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)/gi, function(_, r, g, b) {
-    return '#' + ((1 << 24) + (r << 16) + (g << 8) + (b << 0)).toString(16).substr(-6).toUpperCase();
-  });
-}
 // end of firebug helpers
 
 var splitCSSValues = function(cssValue) {
@@ -103,6 +98,71 @@ var splitCSSValues = function(cssValue) {
   return cssValues;
 };
 
+var ColorValue = function(cssValueObj, translation) {
+  this.value       = cssValueObj.value;
+  this.translation = translation;
+  this.start       = cssValueObj.start;
+  this.end         = cssValueObj.end;
+};
+
+ColorValue.prototype = {
+  rgbSplitter: /^rgba?\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*([\d.]+))?\s*\)$/i,
+  hexColor: /^#([\da-f]{3}|[\da-f]{6})$/i,
+  noColor: {r: 0, g: 0, b: 0},
+  
+  preparePrefixSuffix: function(wholeCssValue) {
+    this.prefix = wholeCssValue.substring(0, this.start);
+    this.suffix = wholeCssValue.substring(this.end + 1);
+  },
+  
+  toNewWholeCssValue: function(newColorValue) {
+    return this.prefix + newColorValue + this.suffix;
+  },
+  
+  toNewColorValue: function(newRGB) {
+    return this.transparency ? this.RGB2RGBAString(newRGB) : this.RGB2HEX(newRGB); 
+  },
+  
+  RGB2HEX: function(rgb) {
+    // taken from firebug
+    return '#' + ((1 << 24) + (rgb.r << 16) + (rgb.g << 8) + (rgb.b << 0)).toString(16).substr(-6).toUpperCase();
+  },
+  
+  RGB2RGBAString: function(rgb) {
+    return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + this.transparency + ')';
+  },
+  
+  toRGB: function() {
+    var hexValue = this.tryToGrabHexColorString();
+    return (hexValue ? this.hex2RGB(hexValue) : this.parseRGBString()) || this.noColor;
+  },
+  
+  tryToGrabHexColorString: function() {
+    var match;
+    return this.translation || ((match = this.value.match(this.hexColor)) && match[1]);
+  },
+  
+  parseRGBString: function(rgbString) {
+    var match = this.value.match(this.rgbSplitter);
+    if (match) {
+      this.transparency = match[4];
+      return {r: parseInt(match[1], 10), g: parseInt(match[2], 10), b: parseInt(match[3], 10)};
+    }
+  },
+  
+  hex2RGB: function(hex) {
+    if (hex.length == 3) { hex = hex.replace(/(.)/g, '$1$1'); }
+    var val = parseInt(hex, 16);
+    return {r: (val & 0xFF0000) >> 16, g: (val & 0xFF00) >> 8, b: val & 0xFF};
+  }
+};
+
+ColorValue.newIfColor = function(cssValue) {
+  var hexTranslation;
+  if (cssValue.type == 'rgb' || (hexTranslation = colorNames[cssValue.value.toLowerCase()])) {
+    return new ColorValue(cssValue, hexTranslation);
+  }
+};
 
 var ColorsDropDown = function(editor, firepicker) {
   this.editor     = editor;
@@ -152,10 +212,9 @@ ColorsDropDown.prototype = {
   },
   
   filterColorValues: function(cssValues) {
-    var colorValues = [], cssValue;
+    var colorValues = [], colorValue;
     for (var i = 0, len = cssValues.length; i < len; i++) {
-      cssValue = cssValues[i];
-      if (cssValue.type == 'rgb' || isColorKeyword(cssValue.value)) { colorValues.push(cssValue); }
+      if (colorValue = ColorValue.newIfColor(cssValues[i])) { colorValues.push(colorValue); }
     }
     return colorValues;
   },
@@ -177,24 +236,22 @@ ColorsDropDown.prototype = {
   cellMousedown: function(e) {
     cancelEvent(e);
 
-    var input = this.dropDown.editor.input, text = this.firstChild, style = this.style, colorValue = this.colorValue;
+    var input = this.dropDown.editor.input, text = this.firstChild, style = this.style, color = this.colorValue;
     
-    colorValue = extend(colorValue, {
-      prefix: input.value.substring(0, colorValue.start),
-      suffix: input.value.substring(colorValue.end + 1)
-    });
+    color.preparePrefixSuffix(input.value);
 
-    this.dropDown.openPopup(this, function(newValue) {
-      input.value           = colorValue.prefix + newValue + colorValue.suffix;
-      text.innerHTML        = newValue;
-      style.backgroundColor = newValue;
+    this.dropDown.openPopup(this, function(newRGB) {
+      var newColorValue     = color.toNewColorValue(newRGB);
+      input.value           = color.toNewWholeCssValue(newColorValue);
+      text.innerHTML        = newColorValue;
+      style.backgroundColor = newColorValue;
 
       Firebug.Editor.update(true);
     });
   },
   
   openPopup: function(colorCell, callback) {
-    this.firepicker.openPopup(this.editor, colorCell, colorCell.colorValue.value, callback);
+    this.firepicker.openPopup(this.editor, colorCell, colorCell.colorValue.toRGB(), callback);
   }
 };
 
@@ -257,6 +314,7 @@ Popup.prototype = {
 Firebug.FirepickerModel = extend(Firebug.Module, {
   ColorsDropDown: ColorsDropDown,
   Popup: Popup,
+  ColorValue: ColorValue,
   
   enable: function() {
     if (!this.initialized) { this.initialize(); }
@@ -308,12 +366,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   
   openPopup: function(editor, colorCell, color, callback) {
     if (!this.colorPickerPopup) { this.colorPickerPopup = new Popup(); }
-    this.colorPickerPopup.open(editor, colorCell, this.fixColor(color), callback);
-  },
-  
-  fixColor: function(color) {
-    var rgbTranslation = colorNames[color.toLowerCase()];
-    return rgbTranslation ? '#' + rgbTranslation : rgbToHex(color);
+    this.colorPickerPopup.open(editor, colorCell, color, callback);
   },
   
   log: function() {
