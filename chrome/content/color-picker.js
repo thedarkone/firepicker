@@ -81,8 +81,10 @@ ColorPicker.prototype = {
   dispose: function() {
     this.sbPicker.removeEventListener('mousedown', this.sbMousedown);
     this.huePicker.removeEventListener('mousedown', this.hueMousedown);
-    this.document.body.removeEventListener('mousemove', this.mouseMove);
-    this.document.body.removeEventListener('mouseup', this.mouseUp);
+    var body = this.document.body;
+    body.removeEventListener('mousemove', this.mouseMove);
+    body.removeEventListener('mouseup', this.mouseUp);
+    body.removeEventListener('mousedown', this.bodyMouseDown);
   },
 
   setupSB: function(sbElement) {
@@ -117,8 +119,10 @@ ColorPicker.prototype = {
   setupObservers: function() {
     this.sbPicker.addEventListener('mousedown', this.sbMousedown, false);
     this.huePicker.addEventListener('mousedown', this.hueMousedown, false);
-    this.document.body.addEventListener('mousemove', this.mouseMove, false)
-    this.document.body.addEventListener('mouseup', this.mouseUp, false);
+    var body = this.document.body;
+    body.addEventListener('mousemove', this.mouseMove, false);
+    body.addEventListener('mouseup', this.mouseUp, false);
+    body.addEventListener('mousedown', this.bodyMouseDown, false);
   },
   
   popUpOpened: function() {
@@ -169,6 +173,11 @@ ColorPicker.prototype = {
   
   browserMouseUp: function() {
     this.notDragging();
+  },
+  
+  bodyMouseDown: function(e) {
+    // stop user from accidentally doing mouse selection (dragger IMG elements are selectable and look ugly when in selection)
+    e.preventDefault();
   },
 
   setColor: function(rgb) {
