@@ -315,6 +315,7 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   ColorsDropDown: ColorsDropDown,
   Popup: Popup,
   ColorValue: ColorValue,
+  colorNames: colorNames,
   
   enable: function() {
     if (!this.initialized) { this.initialize(); }
