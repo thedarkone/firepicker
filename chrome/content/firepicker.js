@@ -263,21 +263,33 @@ Popup.prototype = {
       this.panel                = $('fp-panel', document);
       this.panel._pickerBrowser = this.panel.getElementsByTagName('browser')[0];
       this.panel._pickerBrowser.contentDocument.setGlobalBrowserDoc(document);
-
-      this.panel.addEventListener('popupshown',  this.callbacks.popupshown,  false);
-      this.panel.addEventListener('popuphidden', this.callbacks.popuphidden, false);
+      this.attachPanelCallbacks(this.panel);
     }
     return this.panel;
+  },
+  
+  attachPanelCallbacks: function(panel) {
+    for (var callbackName in this.callbacks) {
+      panel.addEventListener(callbackName, this.callbacks[callbackName], false);
+    }
   },
   
   callbacks: {
     popuphidden: function() {
       if (this._options) {
-        this._options.editor.colorPickerClosed();
-        this._options.editor.colorsDropDown.onValueChange();
+        var editor = this._options.editor;
+        
+        editor.colorsDropDown.onValueChange();
         this._pickerBrowser.contentDocument.popUpClosed();
+
+        // this has to run through setTimout because FF runs the blur event on editor after this callback
+        setTimeout(function(){ editor.colorPickerClosed(); }, 0);
         delete this._options;
       }
+    },
+    
+    popuphiding: function() {
+      if (this._options) { this._options.editor.closingColorPicker(); }
     },
     
     popupshown: function() {
@@ -328,16 +340,15 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   },
   
   editorExtensions: {
-    openingColorPickerPopup: function() {
-      // prevent Firebug from closing the editor in FF 3.7+ (where opening pop up "blurs" the editor's input)
+    closingColorPicker: function() {
+      // prevent Firebug from closing the editor in FF 3.7+ (the editor gets blur event even though the panel has noautofocus="true")
       this._enterOnBlurWas = this.enterOnBlur;
       this.enterOnBlur     = false;
     },
     
     colorPickerClosed: function() {
       this.enterOnBlur = this._enterOnBlurWas;
-      var input        = this.input;
-      setTimeout(function() { input.focus(); }, 0); // return focus to the editor in FF 3.7+
+      this.input.focus();
     }
   },
   
@@ -352,8 +363,8 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
         return result;
       };
       
-      editor.openingColorPickerPopup = this.editorExtensions.openingColorPickerPopup;
-      editor.colorPickerClosed       = this.editorExtensions.colorPickerClosed;
+      editor.closingColorPicker = this.editorExtensions.closingColorPicker;
+      editor.colorPickerClosed  = this.editorExtensions.colorPickerClosed;
     }
   },
   
