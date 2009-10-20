@@ -289,8 +289,7 @@ Popup.prototype = {
     var panel = this.getPanel(), deck = $('fbPanelBar2', document).deck, position = this.computePosition(colorCell, deck, panel._pickerBrowser);
 
     panel._options = {editor: editor, color: color, callback: callback};
-    editor.openingColorPickerPopup();
-    panel.openPopup(deck, 'at_pointer', position.x, position.y, false, true);
+    panel.openPopup(colorCell, 'overlap', position.x, position.y, false, false);
   },
   
   aggregateScrollOffsetTop: function(element) {
@@ -300,14 +299,16 @@ Popup.prototype = {
   },
   
   computePosition: function(colorCell, deck, browser) {
-    var clientOffset      = getClientOffset(colorCell),
-        deckSize          = {height: deck.clientHeight, width: deck.clientWidth},
-        popUpSize         = {height: browser.getAttribute('height'), width: browser.getAttribute('width')},
-        scrollOffsetTop   = this.aggregateScrollOffsetTop(colorCell),
-        toCellFromTop     = clientOffset.y - scrollOffsetTop,
-        idealPopupShiftUp = (popUpSize.height - colorCell.clientHeight) / 2;
+    var clientOffset                 = getClientOffset(colorCell),
+        deckHeight                   = deck.clientHeight,
+        popUpHeight                  = browser.getAttribute('height'),
+        scrollOffsetTop              = this.aggregateScrollOffsetTop(colorCell),
+        toCellFromDeckTopBorder      = clientOffset.y - scrollOffsetTop,
+        idealPopupShiftUp            = (popUpHeight - colorCell.clientHeight) / 2,
+        distanceToBottomScreenBorder = deckHeight - toCellFromDeckTopBorder - (colorCell.clientHeight / 2),
+        outOfScreenHeight            = Math.max(0, (popUpHeight / 2) - distanceToBottomScreenBorder);
     
-    return {x: clientOffset.x + colorCell.clientWidth, y: Math.min(toCellFromTop - idealPopupShiftUp, deckSize.height - popUpSize.height)};
+    return {x: colorCell.clientWidth - 5, y: -Math.max(idealPopupShiftUp, idealPopupShiftUp + outOfScreenHeight)};
   }
 };
 
