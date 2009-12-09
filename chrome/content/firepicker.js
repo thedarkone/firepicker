@@ -190,16 +190,22 @@ ColorsDropDown.prototype = {
   getListContainer: function() {
     if (!this.listContainer) {
       this.listContainer = this.tags.container.insertAfter({}, getChildByClass(this.editor.box, 'textEditorBottom1'));
-      this.addStylesheet(this.listContainer.ownerDocument);
     }
+    this.addStylesheet(this.getHTMLRootOf(this.editor.box));
     return this.listContainer;
   },
   
-  addStylesheet: function(doc) {
-    if (!$('firepickerDropDownStyle', doc)) {
-      var styleSheet = createStyleSheet(doc, 'chrome://firepicker/skin/css-attribute-dialog.css');
-      styleSheet.setAttribute('id', 'firepickerDropDownStyle');
-      addStyleSheet(doc, styleSheet);
+  getHTMLRootOf: function(element) {
+    while (element.tagName != 'HTML' && element.parentNode) { element = element.parentNode; }
+    return element;
+  },
+  
+  addStylesheet: function(htmlRoot) {
+    if (!htmlRoot._withFirepickerDropDownStylesheet) {
+      var styleSheet = createStyleSheet(htmlRoot.ownerDocument, 'chrome://firepicker/skin/css-attribute-dialog.css'),
+          head       = htmlRoot.getElementsByTagName('head')[0];
+      head.appendChild(styleSheet);
+      htmlRoot._withFirepickerDropDownStylesheet = true;
     }
   },
   
