@@ -188,11 +188,18 @@ ColorsDropDown.prototype = {
   },
   
   getListContainer: function() {
-    if (!this.listContainer) {
-      this.listContainer = this.tags.container.insertAfter({}, getChildByClass(this.editor.box, 'textEditorBottom1'));
-    }
+    if (!this.listContainer) { this.listContainer = this.tags.container.insertAfter({}, this.getContainerInsertionPoint()); }
     this.addStylesheet(this.getHTMLRootOf(this.editor.box));
     return this.listContainer;
+  },
+  
+  getContainerInsertionPoint: function() {
+    var bottom = getChildByClass(this.editor.box, 'textEditorBottom1'); // Firebug 1.6 and older
+    if (!bottom) { // Firebug 1.7 has a new editor DOM layout
+      setClass(getBody(this.getHTMLRootOf(this.editor.box)), 'new_dom_layout');
+      bottom = this.editor.box.getElementsByTagName('input')[0];
+    }
+    return bottom;
   },
   
   getHTMLRootOf: function(element) {

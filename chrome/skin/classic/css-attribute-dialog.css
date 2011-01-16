@@ -7,6 +7,12 @@
   padding-right: 1px;
   border: 1px solid #989898;
   -moz-box-shadow: 2px 4px 6px #828282;
+  pointer-events: auto;
+}
+
+.new_dom_layout .firepicker_color_container {
+  margin-top: -7px;
+  margin-left: -5px;
 }
 
 .firepicker_color_container .color_value {
