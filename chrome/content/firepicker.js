@@ -54,7 +54,7 @@ var colorNames = {
 
 
 // taken from Firebug | css.js, slightly tweaked to support rgba
-var reSplitCSS = /(url\("?[^"\)]+?"?\))|(rgba?\(.*?\))|(#[\dA-Fa-f]+)|(-?\d+(\.\d+)?(%|[a-z]{1,2})?)|([^,\s]+)|"(.*?)"/;
+var reSplitCSS = /(url\("?[^"\)]+?"?\))|(rgba?\(.*?\))|(#[\dA-Fa-f]+)|(-?\d+(\.\d+)?(%|[a-z]{1,2})?)|([^,\s\/!]+)|"(.*?)"|(!(.*)?)/;
 
 function parseCSSValue(value, offset) {
   var start = 0;
