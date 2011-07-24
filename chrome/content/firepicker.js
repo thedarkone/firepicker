@@ -348,7 +348,8 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   },
 
   initialize: function() {
-    this.hookIntoCSSPanel();
+    this.hookIntoCSSPanel('css');
+    this.hookIntoCSSPanel('stylesheet');
     this.initialized = true;
   },
   
@@ -381,8 +382,8 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
     }
   },
   
-  hookIntoCSSPanel: function() {
-    var self = this, stylesheetPanelPrototype = Firebug.getPanelType('css').prototype, original = stylesheetPanelPrototype.getEditor;
+  hookIntoCSSPanel: function(type) {
+    var self = this, stylesheetPanelPrototype = Firebug.getPanelType(type).prototype, original = stylesheetPanelPrototype.getEditor;
     stylesheetPanelPrototype.getEditor = function() {
       var result = original.apply(this, arguments);
       if (this.editor) { self.hookIntoCSSEditor(this.editor); }
