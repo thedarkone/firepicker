@@ -33,6 +33,21 @@
     hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
     .footer { text-align:center; padding-top:30px; font-style: italic; }
     .screenshots img { display: block; margin-bottom: 1em; border: 5px solid #472711; }
+    div.install_link {
+      display: block;
+      text-align: center;
+      font-size: 130%;
+      padding: 0.75em;
+      background-color: #452B1A;
+      border-top: 1px solid #392315;
+      border-bottom: 1px solid #6B4227;
+    }
+    div.install_link a {
+      padding-left: 40px;
+      background-image: url("https://static-cdn.addons.mozilla.net/media//img/addon-icons/default-32.png");
+      background-position: left center;
+      background-repeat: no-repeat;
+    }
 	</style>
 	
 </head>
@@ -62,7 +77,12 @@
   </ul>
 </p>
 <h2>Install</h2>
-<p>Install the plugin from the Firefox Add-on site: <a href="https://addons.mozilla.org/en-US/firefox/addon/15032">https://addons.mozilla.org/en-US/firefox/addon/15032</a></p>
+<p class="install">Install the plugin from the Firefox Add-on site:</p>
+
+<div class="install_link">
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/15032">https://addons.mozilla.org/en-US/firefox/addon/15032</a>
+</div>
+
 <p>Report issues here: <a href="http://github.com/thedarkone/firepicker/issues ">http://github.com/thedarkone/firepicker/issues</a></p>
 <h2>Screens</h2>
 <div class="screenshots">
