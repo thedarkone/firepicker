@@ -5,7 +5,7 @@
 
   <popupset>
     <panel id="fp-panel" noautofocus="true">
-      <browser id="fp-panel-browser" disablehistory="true" flex="1" width="229" height="201" src="chrome://firepicker/content/color-picker.html" />
+      <browser id="fp-panel-browser" disablehistory="true" flex="1" width="229" height="223" src="chrome://firepicker/content/color-picker.html" />
     </panel>
   </popupset>
 

@@ -108,7 +108,7 @@ var ColorValue = function(cssValueObj, translation) {
 ColorValue.prototype = {
   rgbSplitter: /^rgba?\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*([\d.]+))?\s*\)$/i,
   hexColor: /^#([\da-f]{3}|[\da-f]{6})$/i,
-  noColor: {r: 0, g: 0, b: 0},
+  noColor: {r: 0, g: 0, b: 0, a: 1},
   
   preparePrefixSuffix: function(wholeCssValue) {
     this.prefix = wholeCssValue.substring(0, this.start);
@@ -120,7 +120,7 @@ ColorValue.prototype = {
   },
   
   toNewColorValue: function(newRGB) {
-    return this.transparency ? this.RGB2RGBAString(newRGB) : this.RGB2HEX(newRGB); 
+    return newRGB.a < 1 ? this.RGB2RGBAString(newRGB) : this.RGB2HEX(newRGB); 
   },
   
   RGB2HEX: function(rgb) {
@@ -129,7 +129,7 @@ ColorValue.prototype = {
   },
   
   RGB2RGBAString: function(rgb) {
-    return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + this.transparency + ')';
+    return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + rgb.a + ')';
   },
   
   toRGB: function() {
@@ -145,15 +145,14 @@ ColorValue.prototype = {
   parseRGBString: function(rgbString) {
     var match = this.value.match(this.rgbSplitter);
     if (match) {
-      this.transparency = match[4];
-      return {r: parseInt(match[1], 10), g: parseInt(match[2], 10), b: parseInt(match[3], 10)};
+      return {r: parseInt(match[1], 10), g: parseInt(match[2], 10), b: parseInt(match[3], 10), a: match[4]};
     }
   },
   
   hex2RGB: function(hex) {
     if (hex.length == 3) { hex = hex.replace(/(.)/g, '$1$1'); }
     var val = parseInt(hex, 16);
-    return {r: (val & 0xFF0000) >> 16, g: (val & 0xFF00) >> 8, b: val & 0xFF};
+    return {r: (val & 0xFF0000) >> 16, g: (val & 0xFF00) >> 8, b: val & 0xFF, a: 1};
   }
 };
 
