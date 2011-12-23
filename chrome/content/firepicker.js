@@ -272,49 +272,15 @@ var Popup = function() {};
 
 Popup.prototype = {
   getPanel: function() {
-    if (!this.panel) {
-      this.panel                = $('fp-panel', document);
-      this.panel._pickerBrowser = this.panel.getElementsByTagName('browser')[0];
-      this.panel._pickerBrowser.contentDocument.setGlobalBrowserDoc(document);
-      this.attachPanelCallbacks(this.panel);
-    }
+    if (!this.panel) { this.panel = new this.PickerPanel(); }
     return this.panel;
   },
   
-  attachPanelCallbacks: function(panel) {
-    for (var callbackName in this.callbacks) {
-      panel.addEventListener(callbackName, this.callbacks[callbackName], false);
-    }
-  },
-  
-  callbacks: {
-    popuphidden: function() {
-      if (this._options) {
-        var editor = this._options.editor;
-        
-        editor.colorsDropDown.onValueChange();
-        this._pickerBrowser.contentDocument.popUpClosed();
-
-        // this has to run through setTimout because FF runs the blur event on editor after this callback
-        setTimeout(function(){ editor.colorPickerClosed(); }, 0);
-        delete this._options;
-      }
-    },
-    
-    popuphiding: function() {
-      if (this._options) { this._options.editor.closingColorPicker(); }
-    },
-    
-    popupshown: function() {
-      if (this._options) { this._pickerBrowser.contentDocument.initColorPicker(this._options.color, this._options.callback); }
-    }
-  },
-  
   open: function(editor, colorCell, color, callback) {
-    var panel = this.getPanel(), deck = $('fbPanelBar2', document).deck, position = this.computePosition(colorCell, deck, panel._pickerBrowser);
+    var panel = this.getPanel(), deck = $('fbPanelBar2', document).deck, position = this.computePosition(colorCell, deck, panel.getBrowser()),
+        options = {editor: editor, color: color, callback: callback};
 
-    panel._options = {editor: editor, color: color, callback: callback};
-    panel.openPopup(colorCell, 'overlap', position.x, position.y, false, false);
+    panel.openPopup(options, colorCell, 'overlap', position.x, position.y, false, false);
   },
   
   aggregateScrollOffsetTop: function(element) {
@@ -335,6 +301,60 @@ Popup.prototype = {
     
     return {x: colorCell.clientWidth - 5, y: -Math.max(idealPopupShiftUp, idealPopupShiftUp + outOfScreenHeight)};
   }
+};
+
+Popup.prototype.PickerPanel = function() {
+  this.getBrowser().contentDocument.setGlobalBrowserDoc(document);
+  this.attachCallbacks();
+};
+
+Popup.prototype.PickerPanel.prototype = {
+  getElement: function() {
+    if (!this.element) {
+      this.element = $('fp-panel', document);
+      this.element.wrapper = this;
+    }
+    return this.element;
+  },
+  
+  getBrowser: function() {
+    if (!this.browser) { this.browser = this.getElement().getElementsByTagName('browser')[0]; }
+    return this.browser;
+  },
+  
+  openPopup: function(options) {
+    this.options = options;
+    this.getElement().openPopup.apply(this.getElement(), Array.slice(arguments, 1));
+  },
+  
+  attachCallbacks: function() {
+    for (var callbackName in this.callbacks) {
+      this.getElement().addEventListener(callbackName, bind(this.callbacks[callbackName], this), false);
+    }
+  },
+  
+  callbacks: { // these will be bound and executed in the PickerPanel's context
+    popuphidden: function() {
+      if (this.options) {
+        var editor = this.options.editor;
+        
+        editor.colorsDropDown.onValueChange();
+        this.getBrowser().contentDocument.popUpClosed();
+
+        // this has to run through setTimout because FF runs the blur event on editor after this callback
+        setTimeout(function(){ editor.colorPickerClosed(); }, 0);
+        delete this.options;
+      }
+    },
+    
+    popuphiding: function() {
+      if (this.options) { this.options.editor.closingColorPicker(); }
+    },
+    
+    popupshown: function() {
+      if (this.options) { this.getBrowser().contentDocument.initColorPicker(this.options.color, this.options.callback); }
+    }
+  },
 };
 
 Firebug.FirepickerModel = extend(Firebug.Module, {
