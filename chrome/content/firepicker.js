@@ -275,10 +275,14 @@ Popup.prototype = {
     var panel = this.getPanel();
     panel.preopenCheck();
     
-    var deck = Firebug.FirepickerModel.$('fbPanelBar2').deck, position = this.computePosition(colorCell, deck, panel.getBrowser()),
+    var position = this.computePosition(colorCell, this.getCssWrapperHeight(editor), panel.getBrowser()),
         options = {editor: editor, color: color, callback: callback};
 
     panel.openPopup(options, colorCell, 'overlap', position.x, position.y, false, false);
+  },
+  
+  getCssWrapperHeight: function(editor) {
+    return editor.input.ownerDocument.documentElement.clientHeight;
   },
   
   aggregateScrollOffsetTop: function(element) {
@@ -287,14 +291,13 @@ Popup.prototype = {
     return offset;
   },
   
-  computePosition: function(colorCell, deck, browser) {
+  computePosition: function(colorCell, cssWrapperHeight, browser) {
     var clientOffset                 = getClientOffset(colorCell),
-        deckHeight                   = deck.clientHeight,
         popUpHeight                  = browser.getAttribute('height'),
         scrollOffsetTop              = this.aggregateScrollOffsetTop(colorCell),
-        toCellFromDeckTopBorder      = clientOffset.y - scrollOffsetTop,
+        toCellFromWrapperTopBorder   = clientOffset.y - scrollOffsetTop,
         idealPopupShiftUp            = (popUpHeight - colorCell.clientHeight) / 2,
-        distanceToBottomScreenBorder = deckHeight - toCellFromDeckTopBorder - (colorCell.clientHeight / 2),
+        distanceToBottomScreenBorder = cssWrapperHeight - toCellFromWrapperTopBorder - (colorCell.clientHeight / 2),
         outOfScreenHeight            = Math.max(0, (popUpHeight / 2) - distanceToBottomScreenBorder);
     
     return {x: colorCell.clientWidth - 5, y: -Math.max(idealPopupShiftUp, idealPopupShiftUp + outOfScreenHeight)};
