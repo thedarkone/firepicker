@@ -325,12 +325,12 @@ Popup.prototype.PickerPanel.prototype = {
     element.wrapper = this;
     this.element = element;
     this.getBrowser().contentDocument.setGlobalBrowserDoc(this.getCurrentDocument());
-    this.attachCallbacks();
+    this.toggleCallbacks(true);
   },
   
   detachFromCurrentElement: function() {
     delete this.element.wrapper;
-    this.forEachCallback(function(callbackName, callback) { this.element.removeEventListener(callbackName, callback, false); });
+    this.toggleCallbacks(false);
     delete this.browser;
   },
   
@@ -359,9 +359,9 @@ Popup.prototype.PickerPanel.prototype = {
     this.getElement().openPopup.apply(this.getElement(), Array.slice(arguments, 1));
   },
   
-  attachCallbacks: function() {
+  toggleCallbacks: function(doAdd) {
     this.forEachCallback(function(callbackName, callback) {
-      this.getElement().addEventListener(callbackName, callback, false);
+      this.getElement()[doAdd ? 'addEventListener' : 'removeEventListener'](callbackName, callback, false);
     });
   },
   
