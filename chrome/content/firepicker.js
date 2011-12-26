@@ -194,12 +194,7 @@ ColorsDropDown.prototype = {
   },
   
   getContainerInsertionPoint: function() {
-    var bottom = getChildByClass(this.editor.box, 'textEditorBottom1'); // Firebug 1.6 and older
-    if (!bottom) { // Firebug 1.7 has a new editor DOM layout
-      setClass(getBody(this.getHTMLRootOf(this.editor.box)), 'new_dom_layout');
-      bottom = this.editor.box.getElementsByTagName('input')[0];
-    }
-    return bottom;
+    return this.editor.box.getElementsByTagName('input')[0];
   },
   
   getHTMLRootOf: function(element) {
