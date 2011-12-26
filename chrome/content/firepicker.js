@@ -280,7 +280,7 @@ Popup.prototype = {
     var panel = this.getPanel();
     panel.preopenCheck();
     
-    var deck = $('fbPanelBar2', document).deck, position = this.computePosition(colorCell, deck, panel.getBrowser()),
+    var deck = Firebug.FirepickerModel.$('fbPanelBar2').deck, position = this.computePosition(colorCell, deck, panel.getBrowser()),
         options = {editor: editor, color: color, callback: callback};
 
     panel.openPopup(options, colorCell, 'overlap', position.x, position.y, false, false);
@@ -324,7 +324,7 @@ Popup.prototype.PickerPanel.prototype = {
     if (this.element) { this.detachFromCurrentElement(); }
     element.wrapper = this;
     this.element = element;
-    this.getBrowser().contentDocument.setGlobalBrowserDoc(this.getCurrentDocument());
+    this.getBrowser().contentDocument.setGlobalBrowserDoc(Firebug.FirepickerModel.getCurrentDocument());
     this.toggleCallbacks(true);
   },
   
@@ -340,13 +340,7 @@ Popup.prototype.PickerPanel.prototype = {
   },
   
   queryForElement: function() {
-    // doing Firebug.chrome.$('fp-panel') might use the incorrect document in the detached mode
-    return $('fp-panel', this.getCurrentDocument());
-  },
-  
-  getCurrentDocument: function() {
-    // doing the simple return document; doesn't get the right thing when FB is in detached mode
-    return Firebug.currentContext.chrome.window.document;
+    return Firebug.FirepickerModel.$('fp-panel');
   },
   
   getBrowser: function() {
@@ -452,6 +446,16 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   openPopup: function(editor, colorCell, color, callback) {
     if (!this.colorPickerPopup) { this.colorPickerPopup = new Popup(); }
     this.colorPickerPopup.open(editor, colorCell, color, callback);
+  },
+  
+  getCurrentDocument: function() {
+    // doing the simple return document; doesn't get the right thing when FB is in detached mode
+    return Firebug.currentContext.chrome.window.document;
+  },
+  
+  $: function(id) {
+    // doing Firebug.chrome.$(id) might use the incorrect document in the detached mode
+    return $(id, this.getCurrentDocument());
   },
   
   log: function() {
