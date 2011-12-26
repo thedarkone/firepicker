@@ -277,7 +277,10 @@ Popup.prototype = {
   },
   
   open: function(editor, colorCell, color, callback) {
-    var panel = this.getPanel(), deck = $('fbPanelBar2', document).deck, position = this.computePosition(colorCell, deck, panel.getBrowser()),
+    var panel = this.getPanel();
+    panel.preopenCheck();
+    
+    var deck = $('fbPanelBar2', document).deck, position = this.computePosition(colorCell, deck, panel.getBrowser()),
         options = {editor: editor, color: color, callback: callback};
 
     panel.openPopup(options, colorCell, 'overlap', position.x, position.y, false, false);
@@ -304,17 +307,46 @@ Popup.prototype = {
 };
 
 Popup.prototype.PickerPanel = function() {
-  this.getBrowser().contentDocument.setGlobalBrowserDoc(document);
-  this.attachCallbacks();
+  var boundCallbacks = {};
+  this.forEachCallback(function(callbackName, callback) {
+    boundCallbacks[callbackName] = bind(callback, this);
+  });
+  this.callbacks = boundCallbacks;
 };
 
 Popup.prototype.PickerPanel.prototype = {
   getElement: function() {
-    if (!this.element) {
-      this.element = $('fp-panel', document);
-      this.element.wrapper = this;
-    }
+    if (!this.element) { this.setElement(this.queryForElement()); }
     return this.element;
+  },
+  
+  setElement: function(element) {
+    if (this.element) { this.detachFromCurrentElement(); }
+    element.wrapper = this;
+    this.element = element;
+    this.getBrowser().contentDocument.setGlobalBrowserDoc(this.getCurrentDocument());
+    this.attachCallbacks();
+  },
+  
+  detachFromCurrentElement: function() {
+    delete this.element.wrapper;
+    this.forEachCallback(function(callbackName, callback) { this.element.removeEventListener(callbackName, callback, false); });
+    delete this.browser;
+  },
+  
+  preopenCheck: function() {
+    var freshResult = this.queryForElement()
+    if (this.element != freshResult) { this.setElement(freshResult); }
+  },
+  
+  queryForElement: function() {
+    // doing Firebug.chrome.$('fp-panel') might use the incorrect document in the detached mode
+    return $('fp-panel', this.getCurrentDocument());
+  },
+  
+  getCurrentDocument: function() {
+    // doing the simple return document; doesn't get the right thing when FB is in detached mode
+    return Firebug.currentContext.chrome.window.document;
   },
   
   getBrowser: function() {
@@ -328,8 +360,14 @@ Popup.prototype.PickerPanel.prototype = {
   },
   
   attachCallbacks: function() {
+    this.forEachCallback(function(callbackName, callback) {
+      this.getElement().addEventListener(callbackName, callback, false);
+    });
+  },
+  
+  forEachCallback: function(fun) {
     for (var callbackName in this.callbacks) {
-      this.getElement().addEventListener(callbackName, bind(this.callbacks[callbackName], this), false);
+      fun.call(this, callbackName, this.callbacks[callbackName]);
     }
   },
   
