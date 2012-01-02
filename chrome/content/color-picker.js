@@ -74,6 +74,16 @@ var ColorPicker = function(element, color, callback) {
 };
 
 ColorPicker.prototype = {
+  setupObservers: function() {
+    this.sbPicker.addEventListener('mousedown', this.sbMousedown, false);
+    this.opacityPicker.addEventListener('mousedown', this.opacityMousedown, false);
+    this.huePicker.addEventListener('mousedown', this.hueMousedown, false);
+    var body = this.document.body;
+    body.addEventListener('mousemove', this.mouseMove, false);
+    body.addEventListener('mouseup', this.mouseUp, false);
+    body.addEventListener('mousedown', this.bodyMouseDown, false);
+  },
+  
   dispose: function() {
     this.sbPicker.removeEventListener('mousedown', this.sbMousedown);
     this.opacityPicker.removeEventListener('mousedown', this.opacityMousedown);
@@ -104,16 +114,6 @@ ColorPicker.prototype = {
   setupBounds: function() {
     var methodsToBind = ['sbMousedown', 'opacityMousedown', 'hueMousedown', 'mouseMove', 'mouseUp', 'browserMouseUp'], i = methodsToBind.length;
     while(i--) { this[methodsToBind[i]] = bind(this[methodsToBind[i]], this); }
-  },
-
-  setupObservers: function() {
-    this.sbPicker.addEventListener('mousedown', this.sbMousedown, false);
-    this.opacityPicker.addEventListener('mousedown', this.opacityMousedown, false);
-    this.huePicker.addEventListener('mousedown', this.hueMousedown, false);
-    var body = this.document.body;
-    body.addEventListener('mousemove', this.mouseMove, false);
-    body.addEventListener('mouseup', this.mouseUp, false);
-    body.addEventListener('mousedown', this.bodyMouseDown, false);
   },
 
   popUpOpened: function() {
@@ -187,6 +187,17 @@ ColorPicker.prototype = {
     this.setSbPicker(this.sbHeight - Math.round(hsv.v * this.sbHeight), Math.round(hsv.s * this.sbWidth));
     this.setOpacity(Math.round(rgb.a * this.opacityWidth));
   },
+  
+  setSbPicker: function(top, left) {
+    top  = this.makeWithin(top,  0, this.sbHeight);
+    left = this.makeWithin(left, 0, this.sbWidth);
+    this.v = (this.sbHeight - top) / this.sbHeight;
+    this.s = left / this.sbWidth;
+    this.sbHandle.style.top  = top  + 'px';
+    this.sbHandle.style.left = left + 'px';
+
+    this.updateOpacityPickerColor();
+  },
 
   setHue: function(top) {
     top    = this.makeWithin(top, 0, this.hueHeight);
@@ -195,6 +206,12 @@ ColorPicker.prototype = {
 
     this.updateSbPickerColor();
     this.updateOpacityPickerColor();
+  },
+  
+  setOpacity: function(left) {
+    left = this.makeWithin(left, 0, this.opacityWidth);
+    this.a = left / this.opacityWidth;
+    this.opacityHandle.style.left = left + 'px';
   },
 
   updateSbPickerColor: function() {
@@ -205,23 +222,6 @@ ColorPicker.prototype = {
     var startColor = ColorConverter.HSV2RGBString(this.h, this.s, this.v, 0);
     var endColor   = ColorConverter.HSV2RGBString(this.h, this.s, this.v, 1);
     this.opacityPicker.style.backgroundImage = '-moz-linear-gradient(0deg, ' + startColor + ', ' + endColor + '), url("chrome://firepicker/skin/checkboard.png")';
-  },
-
-  setOpacity: function(left) {
-    left = this.makeWithin(left, 0, this.opacityWidth);
-    this.a = left / this.opacityWidth;
-    this.opacityHandle.style.left = left + 'px';
-  },
-
-  setSbPicker: function(top, left) {
-    top  = this.makeWithin(top,  0, this.sbHeight);
-    left = this.makeWithin(left, 0, this.sbWidth);
-    this.v = (this.sbHeight - top) / this.sbHeight;
-    this.s = left / this.sbWidth;
-    this.sbHandle.style.top  = top  + 'px';
-    this.sbHandle.style.left = left + 'px';
-
-    this.updateOpacityPickerColor();
   },
 
   colorChanged: function() {
