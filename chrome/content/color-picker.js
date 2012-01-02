@@ -12,7 +12,7 @@ var stopEvent = function(e) {
   e.stopPropagation();
 };
 
-var Color = {
+var ColorConverter = {
   HSV2RGB: function(h, s, v, a) {
     if (undefined == a) {a = 1}
     if (h + 0.0000000001 >= 1) {h = 0}
@@ -202,7 +202,7 @@ ColorPicker.prototype = {
   },
 
   setColor: function(rgb) {
-    var hsv = Color.RGB2HSV(rgb.r, rgb.g, rgb.b, rgb.a);
+    var hsv = ColorConverter.RGB2HSV(rgb.r, rgb.g, rgb.b, rgb.a);
     this.setHue(Math.round(Math.abs(1 - hsv.h) * this.hueHeight));
     this.setSbPicker(this.sbHeight - Math.round(hsv.v * this.sbHeight), Math.round(hsv.s * this.sbWidth));
     this.setOpacity(Math.round(rgb.a * this.opacityWidth));
@@ -218,12 +218,12 @@ ColorPicker.prototype = {
   },
 
   updateSbPickerColor: function() {
-    this.sbPicker.style.backgroundColor = Color.HSV2RGBString(this.h, 1, 1);
+    this.sbPicker.style.backgroundColor = ColorConverter.HSV2RGBString(this.h, 1, 1);
   },
 
   updateOpacityPickerColor: function() {
-    var startColor = Color.HSV2RGBString(this.h, this.s, this.v, 0);
-    var endColor   = Color.HSV2RGBString(this.h, this.s, this.v, 1);
+    var startColor = ColorConverter.HSV2RGBString(this.h, this.s, this.v, 0);
+    var endColor   = ColorConverter.HSV2RGBString(this.h, this.s, this.v, 1);
     this.opacityPicker.style.backgroundImage = '-moz-linear-gradient(0deg, ' + startColor + ', ' + endColor + '), url("chrome://firepicker/skin/checkboard.png")';
   },
 
@@ -249,7 +249,7 @@ ColorPicker.prototype = {
   },
 
   getRGBColor: function() {
-    return Color.HSV2RGB(this.h, this.s, this.v, this.a);
+    return ColorConverter.HSV2RGB(this.h, this.s, this.v, this.a);
   },
 
   makeWithin: function(val, min, max) {
