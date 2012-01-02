@@ -19,7 +19,8 @@ var bind = function(fun, obj) {
 };
 
 var Color = {
-  HSV2RGB: function(h, s, v) {
+  HSV2RGB: function(h, s, v, a) {
+    if (undefined == a) {a = 1}
     if (h + 0.0000000001 >= 1) {h = 0}
     h *= 6;
 
@@ -39,15 +40,22 @@ var Color = {
         case 5: r=v; g=p; b=q; break;
     }
 
-    return {r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255)};
+    return {r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255), a: Math.round(a * 100) / 100};
   },
-  
-  HSV2RGBString: function(h, s, v) {
-    var rgb = this.HSV2RGB(h, s, v);
+
+  HSV2RGBString: function(h, s, v, a) {
+    if (undefined == a) {a = 1}
+
+    var rgb = this.HSV2RGB(h, s, v, a);
+
+    if (rgb.a < 1) {
+      return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + rgb.a + ')';
+    }
+
     return 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')';
   },
 
-  RGB2HSV: function(r, g, b) {
+  RGB2HSV: function(r, g, b, a) {
     var max   = Math.max(r, g, b),
         min   = Math.min(r, g, b),
         delta = max - min,
@@ -63,13 +71,14 @@ var Color = {
        case b:   h=4+(r-g)/delta; break;
     }
 
-    return {h: h / 6, s: s, v: v / 255};
+    return {h: h / 6, s: s, v: v / 255, a: a};
   }
 };
 
 var ColorPicker = function(element, color, callback) {
   this.document = element.ownerDocument;
   this.setupSB(element.querySelector('div.saturation_brightness'));
+  this.setupOpacity(element.querySelector('div.opacity'));
   this.setupHue(element.querySelector('div.hue'));
   this.setupBounds();
   this.setupObservers();
@@ -95,6 +104,13 @@ ColorPicker.prototype = {
     this.sbHeight     = sbElement.offsetHeight - sbElement.borders.top  - sbElement.borders.bottom;
   },
 
+  setupOpacity: function(opacityElement) {
+    this.opacityPicker     = opacityElement;
+    opacityElement.borders = this.getBorderWidths(opacityElement);
+    this.opacityHandle     = opacityElement.querySelector('img');
+    this.opacityWidth      = opacityElement.offsetWidth  - opacityElement.borders.left - opacityElement.borders.right;
+  },
+
   getBorderWidths: function(el) {
     var borders = {}, borderTypes = ['top', 'right', 'bottom', 'left'], borderType, borderCSSName;
     for (var i = 0; borderType = borderTypes[i++];) {
@@ -112,23 +128,24 @@ ColorPicker.prototype = {
   },
 
   setupBounds: function() {
-    var methodsToBind = ['sbMousedown', 'hueMousedown', 'mouseMove', 'mouseUp', 'browserMouseUp'], i = methodsToBind.length;
+    var methodsToBind = ['sbMousedown', 'opacityMousedown', 'hueMousedown', 'mouseMove', 'mouseUp', 'browserMouseUp'], i = methodsToBind.length;
     while(i--) { this[methodsToBind[i]] = bind(this[methodsToBind[i]], this); }
   },
 
   setupObservers: function() {
     this.sbPicker.addEventListener('mousedown', this.sbMousedown, false);
+    this.opacityPicker.addEventListener('mousedown', this.opacityMousedown, false);
     this.huePicker.addEventListener('mousedown', this.hueMousedown, false);
     var body = this.document.body;
     body.addEventListener('mousemove', this.mouseMove, false);
     body.addEventListener('mouseup', this.mouseUp, false);
     body.addEventListener('mousedown', this.bodyMouseDown, false);
   },
-  
+
   popUpOpened: function() {
     globalBrowserDoc.addEventListener('mouseup', this.browserMouseUp, false);
   },
-  
+
   popUpClosed: function() {
     globalBrowserDoc.removeEventListener('mouseup', this.browserMouseUp, false);
   },
@@ -144,6 +161,12 @@ ColorPicker.prototype = {
     this.mouseMove(e);
   },
 
+  opacityMousedown: function(e) {
+    this.opacityDrag = true;
+    this.offset = this.cumulativeOffsetWithBorders(this.opacityPicker);
+    this.mouseMove(e);
+  },
+
   hueMousedown: function(e) {
     this.hueDrag = true;
     this.offset  = this.cumulativeOffsetWithBorders(this.huePicker);
@@ -154,6 +177,10 @@ ColorPicker.prototype = {
     if (this.sbDrag) {
       stopEvent(e);
       this.setSbPicker(e.pageY - this.offset.top, e.pageX - this.offset.left);
+      this.colorChanged();
+    } else if (this.opacityDrag) {
+      stopEvent(e);
+      this.setOpacity(e.pageX - this.offset.left);
       this.colorChanged();
     } else if (this.hueDrag) {
       stopEvent(e);
@@ -166,31 +193,50 @@ ColorPicker.prototype = {
     this.mouseMove(e);
     this.notDragging();
   },
-  
+
   notDragging: function() {
-    this.sbDrag = this.hueDrag = false;
+    this.sbDrag = this.hueDrag = this.opacityDrag = false;
   },
-  
+
   browserMouseUp: function() {
     this.notDragging();
   },
-  
+
   bodyMouseDown: function(e) {
     // stop user from accidentally doing mouse selection (dragger IMG elements are selectable and look ugly when in selection)
     e.preventDefault();
   },
 
   setColor: function(rgb) {
-    var hsv = Color.RGB2HSV(rgb.r, rgb.g, rgb.b);
+    var hsv = Color.RGB2HSV(rgb.r, rgb.g, rgb.b, rgb.a);
     this.setHue(Math.round(Math.abs(1 - hsv.h) * this.hueHeight));
     this.setSbPicker(this.sbHeight - Math.round(hsv.v * this.sbHeight), Math.round(hsv.s * this.sbWidth));
+    this.setOpacity(Math.round(rgb.a * this.opacityWidth));
   },
 
   setHue: function(top) {
     top    = this.makeWithin(top, 0, this.hueHeight);
     this.h = (this.hueHeight - top) / this.hueHeight;
     this.hueHandle.style.top            = top + 'px';
+
+    this.updateSbPickerColor();
+    this.updateOpacityPickerColor();
+  },
+
+  updateSbPickerColor: function() {
     this.sbPicker.style.backgroundColor = Color.HSV2RGBString(this.h, 1, 1);
+  },
+
+  updateOpacityPickerColor: function() {
+    var startColor = Color.HSV2RGBString(this.h, this.s, this.v, 0);
+    var endColor   = Color.HSV2RGBString(this.h, this.s, this.v, 1);
+    this.opacityPicker.style.backgroundImage = '-moz-linear-gradient(0deg, ' + startColor + ', ' + endColor + '), url("chrome://firepicker/skin/checkboard.png")';
+  },
+
+  setOpacity: function(left) {
+    left = this.makeWithin(left, 0, this.opacityWidth);
+    this.a = left / this.opacityWidth;
+    this.opacityHandle.style.left = left + 'px';
   },
 
   setSbPicker: function(top, left) {
@@ -200,6 +246,8 @@ ColorPicker.prototype = {
     this.s = left / this.sbWidth;
     this.sbHandle.style.top  = top  + 'px';
     this.sbHandle.style.left = left + 'px';
+
+    this.updateOpacityPickerColor();
   },
 
   colorChanged: function() {
@@ -207,7 +255,7 @@ ColorPicker.prototype = {
   },
 
   getRGBColor: function() {
-    return Color.HSV2RGB(this.h, this.s, this.v);
+    return Color.HSV2RGB(this.h, this.s, this.v, this.a);
   },
 
   makeWithin: function(val, min, max) {
