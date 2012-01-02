@@ -14,7 +14,6 @@ var stopEvent = function(e) {
 
 var ColorConverter = {
   HSV2RGB: function(h, s, v, a) {
-    if (undefined == a) {a = 1}
     if (h + 0.0000000001 >= 1) {h = 0}
     h *= 6;
 
@@ -34,22 +33,16 @@ var ColorConverter = {
         case 5: r=v; g=p; b=q; break;
     }
 
-    return {r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255), a: Math.round(a * 100) / 100};
+    return new Color(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), a && (Math.round(a * 100) / 100));
   },
 
   HSV2RGBString: function(h, s, v, a) {
-    if (undefined == a) {a = 1}
-
-    var rgb = this.HSV2RGB(h, s, v, a);
-
-    if (rgb.a < 1) {
-      return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + rgb.a + ')';
-    }
-
-    return 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')';
+    return this.HSV2RGB(h, s, v, a).toString();
   },
 
-  RGB2HSV: function(r, g, b, a) {
+  RGB2HSV: function(rgb) {
+    var r = rgb.r, g = rgb.g, b = rgb.b, a = rgb.a;
+    
     var max   = Math.max(r, g, b),
         min   = Math.min(r, g, b),
         delta = max - min,
@@ -202,7 +195,7 @@ ColorPicker.prototype = {
   },
 
   setColor: function(rgb) {
-    var hsv = ColorConverter.RGB2HSV(rgb.r, rgb.g, rgb.b, rgb.a);
+    var hsv = ColorConverter.RGB2HSV(rgb);
     this.setHue(Math.round(Math.abs(1 - hsv.h) * this.hueHeight));
     this.setSbPicker(this.sbHeight - Math.round(hsv.v * this.sbHeight), Math.round(hsv.s * this.sbWidth));
     this.setOpacity(Math.round(rgb.a * this.opacityWidth));

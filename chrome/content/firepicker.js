@@ -257,7 +257,7 @@ ColorsDropDown.prototype = {
     color.preparePrefixSuffix(input.value);
 
     this.dropDown.openPopup(this, function(newRGB) {
-      var newColorString    = new Color(newRGB.r, newRGB.g, newRGB.b, newRGB.a).toString();
+      var newColorString    = newRGB.toString();
       input.value           = color.toNewWholeCssValue(newColorString);
       text.innerHTML        = newColorString;
       style.backgroundColor = newColorString;
@@ -337,7 +337,8 @@ Popup.prototype.PickerPanel.prototype = {
   setupPopup: function() {
     this.getBrowser().contentDocument.expose({
       globalDocument: Firebug.FirepickerModel.getCurrentDocument(),
-      bind: bind
+      bind: bind,
+      Color: Color
     });
   },
   
