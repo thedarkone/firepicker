@@ -204,7 +204,7 @@ ColorPicker.prototype = {
   setHue: function(top) {
     top    = this.makeWithin(top, 0, this.hueHeight);
     this.h = (this.hueHeight - top) / this.hueHeight;
-    this.hueHandle.style.top            = top + 'px';
+    this.hueHandle.style.top = top + 'px';
 
     this.updateSbPickerColor();
     this.updateOpacityPickerColor();
