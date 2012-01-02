@@ -64,9 +64,9 @@ var ColorConverter = {
 
 var ColorPicker = function(element, color, callback) {
   this.document = element.ownerDocument;
-  this.setupSB(element.querySelector('div.saturation_brightness'));
-  this.setupOpacity(element.querySelector('div.opacity'));
-  this.setupHue(element.querySelector('div.hue'));
+  this.setupPicker(element.querySelector('div.saturation_brightness'), 'sb');
+  this.setupPicker(element.querySelector('div.opacity'), 'opacity');
+  this.setupPicker(element.querySelector('div.hue'), 'hue');
   this.setupBounds();
   this.setupObservers();
   this.callback = callback;
@@ -83,20 +83,13 @@ ColorPicker.prototype = {
     body.removeEventListener('mouseup', this.mouseUp);
     body.removeEventListener('mousedown', this.bodyMouseDown);
   },
-
-  setupSB: function(sbElement) {
-    this.sbPicker     = sbElement;
-    sbElement.borders = this.getBorderWidths(sbElement);
-    this.sbHandle     = sbElement.querySelector('img');
-    this.sbWidth      = sbElement.offsetWidth  - sbElement.borders.left - sbElement.borders.right;
-    this.sbHeight     = sbElement.offsetHeight - sbElement.borders.top  - sbElement.borders.bottom;
-  },
-
-  setupOpacity: function(opacityElement) {
-    this.opacityPicker     = opacityElement;
-    opacityElement.borders = this.getBorderWidths(opacityElement);
-    this.opacityHandle     = opacityElement.querySelector('img');
-    this.opacityWidth      = opacityElement.offsetWidth  - opacityElement.borders.left - opacityElement.borders.right;
+  
+  setupPicker: function(wrapperElement, pickerType) {
+    wrapperElement.borders = this.getBorderWidths(wrapperElement);
+    this[pickerType + 'Picker'] = wrapperElement;
+    this[pickerType + 'Handle'] = wrapperElement.querySelector('img');
+    this[pickerType + 'Width']  = wrapperElement.offsetWidth  - wrapperElement.borders.left - wrapperElement.borders.right;
+    this[pickerType + 'Height'] = wrapperElement.offsetHeight - wrapperElement.borders.top  - wrapperElement.borders.bottom;
   },
 
   getBorderWidths: function(el) {
@@ -106,13 +99,6 @@ ColorPicker.prototype = {
       borders[borderType] = parseInt(el.style[borderCSSName] || document.defaultView.getComputedStyle(el, null)[borderCSSName], 10);
     }
     return borders;
-  },
-
-  setupHue: function(hueElement) {
-    this.huePicker     = hueElement;
-    hueElement.borders = this.getBorderWidths(hueElement);
-    this.hueHandle     = hueElement.querySelector('img');
-    this.hueHeight     = hueElement.offsetHeight - hueElement.borders.top - hueElement.borders.bottom;
   },
 
   setupBounds: function() {
