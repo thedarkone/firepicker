@@ -12,12 +12,6 @@ var stopEvent = function(e) {
   e.stopPropagation();
 };
 
-var bind = function(fun, obj) {
-  return function() {
-    return fun.apply(obj, arguments);
-  }
-};
-
 var Color = {
   HSV2RGB: function(h, s, v, a) {
     if (undefined == a) {a = 1}
@@ -143,11 +137,11 @@ ColorPicker.prototype = {
   },
 
   popUpOpened: function() {
-    globalBrowserDoc.addEventListener('mouseup', this.browserMouseUp, false);
+    globalDocument.addEventListener('mouseup', this.browserMouseUp, false);
   },
 
   popUpClosed: function() {
-    globalBrowserDoc.removeEventListener('mouseup', this.browserMouseUp, false);
+    globalDocument.removeEventListener('mouseup', this.browserMouseUp, false);
   },
 
   cumulativeOffsetWithBorders: function(element) {
@@ -263,8 +257,10 @@ ColorPicker.prototype = {
   }
 };
 
-document.setGlobalBrowserDoc = function(globalBrowserDoc) {
-  window.globalBrowserDoc = globalBrowserDoc;
+document.expose = function(values) {
+  for (var valueName in values) {
+    window[valueName] = values[valueName];
+  }
 };
 
 document.initColorPicker = function(color, callback) {

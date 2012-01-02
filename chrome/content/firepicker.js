@@ -330,8 +330,15 @@ Popup.prototype.PickerPanel.prototype = {
     if (this.element) { this.detachFromCurrentElement(); }
     element.wrapper = this;
     this.element = element;
-    this.getBrowser().contentDocument.setGlobalBrowserDoc(Firebug.FirepickerModel.getCurrentDocument());
+    this.setupPopup();
     this.toggleCallbacks(true);
+  },
+  
+  setupPopup: function() {
+    this.getBrowser().contentDocument.expose({
+      globalDocument: Firebug.FirepickerModel.getCurrentDocument(),
+      bind: bind
+    });
   },
   
   detachFromCurrentElement: function() {
