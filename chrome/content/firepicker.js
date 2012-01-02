@@ -98,6 +98,28 @@ var splitCSSValues = function(cssValue) {
   return cssValues;
 };
 
+var Color = function(r, g, b, a) {
+  this.r = r || 0;
+  this.g = g || 0;
+  this.b = b || 0;
+  this.a = undefined == a ? 1 : a;
+};
+
+Color.prototype = {
+  toString: function() {
+    return this.a < 1 ? this.toRGBAString() : this.toHEXString();
+  },
+  
+  toRGBAString: function() {
+    return 'rgba(' + this.r + ', ' + this.g + ', ' + this.b + ', ' + this.a + ')';
+  },
+  
+  toHEXString: function() {
+    // taken from firebug
+    return '#' + ((1 << 24) + (this.r << 16) + (this.g << 8) + (this.b << 0)).toString(16).substr(-6).toUpperCase();
+  }
+};
+
 var ColorValue = function(cssValueObj, translation) {
   this.value       = cssValueObj.value;
   this.translation = translation;
@@ -108,28 +130,15 @@ var ColorValue = function(cssValueObj, translation) {
 ColorValue.prototype = {
   rgbSplitter: /^rgba?\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*([\d.]+))?\s*\)$/i,
   hexColor: /^#([\da-f]{3}|[\da-f]{6})$/i,
-  noColor: {r: 0, g: 0, b: 0, a: 1},
+  noColor: new Color(),
   
   preparePrefixSuffix: function(wholeCssValue) {
     this.prefix = wholeCssValue.substring(0, this.start);
     this.suffix = wholeCssValue.substring(this.end + 1);
   },
   
-  toNewWholeCssValue: function(newColorValue) {
-    return this.prefix + newColorValue + this.suffix;
-  },
-  
-  toNewColorValue: function(newRGB) {
-    return newRGB.a < 1 ? this.RGB2RGBAString(newRGB) : this.RGB2HEX(newRGB); 
-  },
-  
-  RGB2HEX: function(rgb) {
-    // taken from firebug
-    return '#' + ((1 << 24) + (rgb.r << 16) + (rgb.g << 8) + (rgb.b << 0)).toString(16).substr(-6).toUpperCase();
-  },
-  
-  RGB2RGBAString: function(rgb) {
-    return 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + rgb.a + ')';
+  toNewWholeCssValue: function(newColorString) {
+    return this.prefix + newColorString + this.suffix;
   },
   
   toRGB: function() {
@@ -145,14 +154,14 @@ ColorValue.prototype = {
   parseRGBString: function(rgbString) {
     var match = this.value.match(this.rgbSplitter);
     if (match) {
-      return {r: parseInt(match[1], 10), g: parseInt(match[2], 10), b: parseInt(match[3], 10), a: match[4]};
+      return new Color(parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10), match[4]);
     }
   },
   
   hex2RGB: function(hex) {
     if (hex.length == 3) { hex = hex.replace(/(.)/g, '$1$1'); }
     var val = parseInt(hex, 16);
-    return {r: (val & 0xFF0000) >> 16, g: (val & 0xFF00) >> 8, b: val & 0xFF, a: 1};
+    return new Color((val & 0xFF0000) >> 16, (val & 0xFF00) >> 8, val & 0xFF);
   }
 };
 
@@ -248,10 +257,10 @@ ColorsDropDown.prototype = {
     color.preparePrefixSuffix(input.value);
 
     this.dropDown.openPopup(this, function(newRGB) {
-      var newColorValue     = color.toNewColorValue(newRGB);
-      input.value           = color.toNewWholeCssValue(newColorValue);
-      text.innerHTML        = newColorValue;
-      style.backgroundColor = newColorValue;
+      var newColorString    = new Color(newRGB.r, newRGB.g, newRGB.b, newRGB.a).toString();
+      input.value           = color.toNewWholeCssValue(newColorString);
+      text.innerHTML        = newColorString;
+      style.backgroundColor = newColorString;
 
       Firebug.Editor.update(true);
     });
