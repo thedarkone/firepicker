@@ -76,6 +76,7 @@ var ColorPicker = function(element, color, callback) {
 ColorPicker.prototype = {
   dispose: function() {
     this.sbPicker.removeEventListener('mousedown', this.sbMousedown);
+    this.opacityPicker.removeEventListener('mousedown', this.opacityMousedown);
     this.huePicker.removeEventListener('mousedown', this.hueMousedown);
     var body = this.document.body;
     body.removeEventListener('mousemove', this.mouseMove);
