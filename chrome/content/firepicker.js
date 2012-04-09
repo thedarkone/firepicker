@@ -53,8 +53,8 @@ var colorNames = {
 };
 
 
-// taken from Firebug | css.js, slightly tweaked to support rgba
-var reSplitCSS = /(url\("?[^"\)]+?"?\))|(rgba?\(.*?\))|(#[\dA-Fa-f]+)|(-?\d+(\.\d+)?(%|[a-z]{1,2})?)|([^,\s\/!#]+)|"(.*?)"|(!(.*)?)/;
+// taken from Firebug | cssPanel.js
+var reSplitCSS = /(url\("?[^"\)]+?"?\))|(rgba?\(.*?\))|(hsla?\(.*?\))|(#[\dA-Fa-f]+)|(-?\d+(\.\d+)?(%|[a-z]{1,4})?)|([^,\s\/!\(\)]+)|"(.*?)"|(!(.*)?)/;
 
 function parseCSSValue(value, offset) {
   var start = 0;
@@ -77,9 +77,9 @@ function parseCSSValue(value, offset) {
     var type;
     if (m[1])
     type = "url";
-    else if (m[2] || m[3])
+    else if (m[2] || m[3] || m[4])
     type = "rgb";
-    else if (m[4])
+    else if (m[5])
     type = "int";
 
     return {value: m[0], start: start+m.index, end: start+m.index+(m[0].length-1), type: type};
