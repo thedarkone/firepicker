@@ -59,7 +59,7 @@ var reSplitCSS = /(url\("?[^"\)]+?"?\))|(rgba?\(.*?\))|(hsla?\(.*?\))|(#[\dA-Fa-
 function parseCSSValue(value, offset) {
   var start = 0;
   var m;
-  while (1)
+  while (true)
   {
     m = reSplitCSS.exec(value);
     if (m && m.index+m[0].length < offset)
@@ -69,18 +69,18 @@ function parseCSSValue(value, offset) {
       offset -= m.index+m[0].length;
     }
     else
-    break;
+      break;
   }
 
   if (m)
   {
     var type;
     if (m[1])
-    type = "url";
+      type = "url";
     else if (m[2] || m[3] || m[4])
-    type = "rgb";
+      type = "rgb";
     else if (m[5])
-    type = "int";
+      type = "int";
 
     return {value: m[0], start: start+m.index, end: start+m.index+(m[0].length-1), type: type};
   }
