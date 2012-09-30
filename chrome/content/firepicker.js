@@ -179,7 +179,7 @@ var ColorsDropDown = function(editor, firepicker) {
 
 ColorsDropDown.prototype = {
   tags: domplate({
-    container: DIV({'class': 'firepicker_color_container'}),
+    container: DIV({'class': 'firepicker_color_container'}, DIV({'class': 'color_list'})),
     valueCell: DIV({'class': 'color_value', style: 'background-color: $color;'},
       DIV({'class': 'css_text'}, '$color')
     )
@@ -236,14 +236,14 @@ ColorsDropDown.prototype = {
   },
   
   updateList: function(colorValues) {
-    var container = this.getListContainer();
-    eraseNode(container);
-    for (var i = 0, len = colorValues.length; i < len; i++) { this.addColorCell(container, colorValues[i]); }
+    var container = this.getListContainer(), colorsList = container.firstChild;
+    eraseNode(colorsList);
+    for (var i = 0, len = colorValues.length; i < len; i++) { this.addColorCell(colorsList, colorValues[i]); }
     container.style.display = colorValues.length == 0 ? 'none' : 'block';
   },
   
-  addColorCell: function(container, colorValue) {
-    var newCell = this.tags.valueCell.append({color: colorValue.value}, container);
+  addColorCell: function(colorsList, colorValue) {
+    var newCell = this.tags.valueCell.append({color: colorValue.value}, colorsList);
     newCell.colorValue = colorValue;
     newCell.dropDown   = this;
     newCell.addEventListener('mousedown', this.cellMousedown, false);
