@@ -12,61 +12,13 @@ var stopEvent = function(e) {
   e.stopPropagation();
 };
 
-var ColorConverter = {
-  HSV2RGB: function(h, s, v, a) {
-    if (h + 0.0000000001 >= 1) {h = 0}
-    h *= 6;
-
-    var i = parseInt(h, 10),
-        f = h - i,
-        p = v * (1 - s),
-        q = v * (1 - s * f),
-        t = v * (1 - s * (1 - f)),
-        r, g, b;
-
-    switch (i) {
-        case 0: r=v; g=t; b=p; break;
-        case 1: r=q; g=v; b=p; break;
-        case 2: r=p; g=v; b=t; break;
-        case 3: r=p; g=q; b=v; break;
-        case 4: r=t; g=p; b=v; break;
-        case 5: r=v; g=p; b=q; break;
-    }
-
-    return new Color(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), a && (Math.round(a * 100) / 100));
-  },
-
-  HSV2RGBString: function(h, s, v, a) {
-    return this.HSV2RGB(h, s, v, a).toString();
-  },
-
-  RGB2HSV: function(rgb) {
-    var r = rgb.r, g = rgb.g, b = rgb.b, a = rgb.a;
-    
-    var max   = Math.max(r, g, b),
-        min   = Math.min(r, g, b),
-        delta = max - min,
-        s     = (max === 0) ? 0 : 1-(min/max),
-        v     = max, h;
-
-    switch (max) {
-       case min: h=0; break;
-       case r:   h=(g-b)/delta;
-                 if (g<b) {h+=6}
-                 break;
-       case g:   h=2+(b-r)/delta; break;
-       case b:   h=4+(r-g)/delta; break;
-    }
-
-    return {h: h / 6, s: s, v: v / 255, a: a};
-  }
-};
-
 var ColorPicker = function(element, color, callback) {
   this.document = element.ownerDocument;
   this.setupPicker(element.querySelector('div.saturation_brightness'), 'sb');
   this.setupPicker(element.querySelector('div.opacity'), 'opacity');
   this.setupPicker(element.querySelector('div.hue'), 'hue');
+  this.sbPickerColor      = new Color.HSV(0, 1, 1);
+  this.opacityPickerColor = new Color.HSV();
   this.setupBounds();
   this.setupObservers();
   this.callback = callback;
@@ -181,11 +133,12 @@ ColorPicker.prototype = {
     e.preventDefault();
   },
 
-  setColor: function(rgb) {
-    var hsv = ColorConverter.RGB2HSV(rgb);
-    this.setHue(Math.round(Math.abs(1 - hsv.h) * this.hueHeight));
-    this.setSbPicker(this.sbHeight - Math.round(hsv.v * this.sbHeight), Math.round(hsv.s * this.sbWidth));
-    this.setOpacity(Math.round(rgb.a * this.opacityWidth));
+  setColor: function(color) {
+    var hsv = color.toHSV();
+    this.colorTypeConverter = 'to' + color.colorType.toUpperCase();
+    this.setHue(Math.round(Math.abs(1 - hsv.getH()) * this.hueHeight));
+    this.setSbPicker(this.sbHeight - Math.round(hsv.getV() * this.sbHeight), Math.round(hsv.getS() * this.sbWidth));
+    this.setOpacity(Math.round(color.a * this.opacityWidth));
   },
   
   setSbPicker: function(top, left) {
@@ -215,21 +168,29 @@ ColorPicker.prototype = {
   },
 
   updateSbPickerColor: function() {
-    this.sbPicker.style.backgroundColor = ColorConverter.HSV2RGBString(this.h, 1, 1);
+    var color = this.sbPickerColor;
+    color.setH(this.h);
+    this.sbPicker.style.backgroundColor = color.toRGB().toString();
   },
 
   updateOpacityPickerColor: function() {
-    var startColor = ColorConverter.HSV2RGBString(this.h, this.s, this.v, 0);
-    var endColor   = ColorConverter.HSV2RGBString(this.h, this.s, this.v, 1);
+    var color = this.opacityPickerColor, startColor, endColor;
+    color.setH(this.h);
+    color.setS(this.s);
+    color.setV(this.v);
+    color.setA(0);
+    startColor = color.toRGB().toString();
+    color.setA(1);
+    endColor = color.toRGB().toString();
     this.opacityPicker.style.backgroundImage = '-moz-linear-gradient(0deg, ' + startColor + ', ' + endColor + '), url("chrome://firepicker/skin/checkboard.png")';
   },
 
   colorChanged: function() {
-    this.callback(this.getRGBColor());
+    this.callback(this.getCurrentColor()[this.colorTypeConverter]());
   },
 
-  getRGBColor: function() {
-    return ColorConverter.HSV2RGB(this.h, this.s, this.v, this.a);
+  getCurrentColor: function() {
+    return new Color.HSV(this.h, this.s, this.v, this.a);
   },
 
   makeWithin: function(val, min, max) {

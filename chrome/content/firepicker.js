@@ -79,6 +79,8 @@ function parseCSSValue(value, offset) {
       type = "url";
     else if (m[2] || m[3] || m[4])
       type = "rgb";
+    else if (m[3])
+      type = "hsl";
     else if (m[5])
       type = "int";
 
@@ -98,76 +100,263 @@ var splitCSSValues = function(cssValue) {
   return cssValues;
 };
 
-var Color = function(r, g, b, a) {
-  this.r = r || 0;
-  this.g = g || 0;
-  this.b = b || 0;
+var Color = function(v1, v2, v3, a) {
+  this.v1 = v1 || 0;
+  this.v2 = v2 || 0;
+  this.v3 = v3 || 0;
   this.a = undefined == a ? 1 : a;
 };
 
 Color.prototype = {
   toString: function() {
-    return this.a < 1 ? this.toRGBAString() : this.toHEXString();
+    var a = this.a, useAlpha = a < 1, colorStr = this.colorType;
+    if (useAlpha) { colorStr += 'a'; }
+    colorStr += '(' + this.v1toString() + ', ' + this.v2toString() + ', ' + this.v3toString();
+    if (useAlpha) { colorStr += ', ' + (Math.round(a * 100) / 100); }
+    return colorStr + ')';
   },
   
-  toRGBAString: function() {
-    return 'rgba(' + this.r + ', ' + this.g + ', ' + this.b + ', ' + this.a + ')';
+  v1toString: function() {
+    return this.v1;
+  },
+  
+  v2toString: function() {
+    return this.v2;
+  },
+  
+  v3toString: function() {
+    return this.v3;
+  }
+};
+
+Color.prototype.toFullString = Color.prototype.toString;
+
+Color.RGB = function(r, g, b, a) {
+  Color.call(this, r, g, b, a);
+};
+
+Color.RGB.prototype = descend(new Color(), {
+  constructor: Color.RGB,
+  colorType: 'rgb',
+  
+  toString: function() {
+    return this.a < 1 ? this.toFullString() : this.toHEXString();
   },
   
   toHEXString: function() {
     // taken from firebug
-    return '#' + ((1 << 24) + (this.r << 16) + (this.g << 8) + (this.b << 0)).toString(16).substr(-6).toUpperCase();
+    var r = this.v1, g = this.v2, b = this.v3;
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + (b << 0)).toString(16).substr(-6).toUpperCase();
+  },
+  
+  toRGB: function() {
+    return this;
+  },
+  
+  toHSV: function() {
+    var r = this.v1, g = this.v2, b = this.v3, a = this.a;
+    
+    var max   = Math.max(r, g, b),
+        min   = Math.min(r, g, b),
+        delta = max - min,
+        s     = (max === 0) ? 0 : 1-(min/max),
+        v     = max, h;
+
+    switch (max) {
+       case min: h=0; break;
+       case r:   h=(g-b)/delta;
+                 if (g<b) {h+=6}
+                 break;
+       case g:   h=2+(b-r)/delta; break;
+       case b:   h=4+(r-g)/delta; break;
+    }
+
+    return new Color.HSV(h / 6, s, v / 255, a);
   }
+});
+
+Color.HueBased = descend(new Color(), {
+  v1toString: function() {
+    return Math.round(this.v1 * 360);
+  },
+  
+  v2toString: function() {
+    return Math.round(this.v2 * 100) + '%';
+  },
+  
+  v3toString: function() {
+    return Math.round(this.v3 * 100) + '%';
+  }
+});
+
+Color.HSL = function(h, s, l, a) {
+  Color.call(this, h, s, l, a);
 };
 
+Color.HSL.prototype = descend(Color.HueBase, {
+  constructor: Color.HSL,
+  colorType: 'hsl',
+  
+  toHSL: function() {
+    return this;
+  },
+  
+  toHSV: function() {
+    var h = this.v1, s = this.v2, l = this.v3,
+        processedL = l * 2,
+        processedS = s * (processedL <= 1 ? processedL : 2 - processedL);
+    
+    return new Color.HSV(h, (2 * processedS) / (processedL + processedS), (processedL + processedS) / 2, this.a);
+  }
+});
+
+Color.HSV = function(h, s, v, a) {
+  Color.call(this, h, s, v, a);
+};
+
+Color.HSV.prototype = descend(Color.HueBase, {
+  constructor: Color.HSV,
+  colorType: 'hsv',
+  
+  toHSV: function() {
+    return this;
+  },
+  
+  toRGB: function() {
+    var h = this.v1, s = this.v2, v = this.v3, a = this.a;
+    
+    if (h + 0.0000000001 >= 1) {h = 0}
+    h *= 6;
+
+    var i = parseInt(h, 10),
+        f = h - i,
+        p = v * (1 - s),
+        q = v * (1 - s * f),
+        t = v * (1 - s * (1 - f)),
+        r, g, b;
+
+    switch (i) {
+        case 0: r=v; g=t; b=p; break;
+        case 1: r=q; g=v; b=p; break;
+        case 2: r=p; g=v; b=t; break;
+        case 3: r=p; g=q; b=v; break;
+        case 4: r=t; g=p; b=v; break;
+        case 5: r=v; g=p; b=q; break;
+    }
+
+    return new Color.RGB(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255), this.a);
+  },
+  
+  toHSL: function() {
+    var h = this.v1, s = this.v2, v = this.v3, a = this.a,
+        newL = (2 - s) * v,
+        newS = (s * v) / (newL <= 1 ? newL : 2 - newL);
+    
+    return new Color.HSL(h, isNaN(newS) ? 0 : newS, newL / 2, this.a);
+  },
+  
+  setH: function(h) {
+    this.v1 = h;
+  },
+  
+  getH: function() {
+    return this.v1;
+  },
+  
+  setS: function(s) {
+    this.v2 = s;
+  },
+  
+  getS: function() {
+    return this.v2;
+  },
+  
+  setV: function(v) {
+    this.v3 = v;
+  },
+  
+  getV: function() {
+    return this.v3;
+  },
+  
+  setA: function(a) {
+    this.a = a;
+  },
+  
+  getA: function() {
+    return this.a;
+  }
+});
+
 var ColorValue = function(cssValueObj, translation) {
-  this.value       = cssValueObj.value;
+  this.cssValueObj = cssValueObj;
   this.translation = translation;
-  this.start       = cssValueObj.start;
-  this.end         = cssValueObj.end;
 };
 
 ColorValue.prototype = {
-  rgbSplitter: /^rgba?\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*([\d.]+))?\s*\)$/i,
+  bracketedSplitter: /^(rgb|hsl)a?\((\d{1,3})(%?),\s*(\d{1,3})(%?),\s*(\d{1,3})(%?)(?:,\s*([\d.]+))?\s*\)$/i,
   hexColor: /^#([\da-f]{3}|[\da-f]{6})$/i,
-  noColor: new Color(),
+  noColor: new Color.RGB(),
   
   preparePrefixSuffix: function(wholeCssValue) {
-    this.prefix = wholeCssValue.substring(0, this.start);
-    this.suffix = wholeCssValue.substring(this.end + 1);
+    this.prefix = wholeCssValue.substring(0, this.cssValueObj.start);
+    this.suffix = wholeCssValue.substring(this.cssValueObj.end + 1);
   },
   
   toNewWholeCssValue: function(newColorString) {
     return this.prefix + newColorString + this.suffix;
   },
   
-  toRGB: function() {
-    var hexValue = this.tryToGrabHexColorString();
-    return (hexValue ? this.hex2RGB(hexValue) : this.parseRGBString()) || this.noColor;
+  toColor: function() {
+    var color, hexValue;
+    if (this.translation) {
+      color = this.hex2RGB(this.translation);
+    } else if (this.cssValueObj.type == 'rgb' && (hexValue = this.tryToGrabHexColorString())) {
+      color = this.hex2RGB(hexValue);
+    } else {
+      color = this.parseBracketedColor();
+    }
+    return color || this.noColor;
   },
   
   tryToGrabHexColorString: function() {
     var match;
-    return this.translation || ((match = this.value.match(this.hexColor)) && match[1]);
+    return (match = this.getValue().match(this.hexColor)) && match[1];
   },
   
-  parseRGBString: function(rgbString) {
-    var match = this.value.match(this.rgbSplitter);
+  parseBracketedColor: function() {
+    var match = this.cssValueObj.value.match(this.bracketedSplitter);
     if (match) {
-      return new Color(parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10), match[4]);
+      var colorType = match[1].toUpperCase(), v1 = parseInt(match[2], 10), v2 = parseInt(match[4], 10), v3 = parseInt(match[6], 10);
+      if (colorType == 'RGB') {
+        // convert percentages into byte values (0-255)
+        if (match[3]) { v1 = Math.round(v1 * 2.55); }
+        if (match[5]) { v2 = Math.round(v2 * 2.55); }
+        if (match[7]) { v3 = Math.round(v3 * 2.55); }
+      } else if (colorType == 'HSL') {
+        // Color.HSL expects its values in the 0-1 range
+        v1 /= 360;
+        v2 /= 100;
+        v3 /= 100;
+      }
+      return new Color[colorType](v1, v2, v3, match[8]);
     }
   },
   
   hex2RGB: function(hex) {
     if (hex.length == 3) { hex = hex.replace(/(.)/g, '$1$1'); }
     var val = parseInt(hex, 16);
-    return new Color((val & 0xFF0000) >> 16, (val & 0xFF00) >> 8, val & 0xFF);
+    return new Color.RGB((val & 0xFF0000) >> 16, (val & 0xFF00) >> 8, val & 0xFF);
+  },
+  
+  getValue: function() {
+    return this.cssValueObj.value;
   }
 };
 
 ColorValue.newIfColor = function(cssValue) {
-  var hexTranslation;
-  if (cssValue.type == 'rgb' || (hexTranslation = colorNames[cssValue.value.toLowerCase()])) {
+  var type = cssValue.type, hexTranslation;
+  if (type == 'rgb' || type == 'hsl' || (hexTranslation = colorNames[cssValue.value.toLowerCase()])) {
     return new ColorValue(cssValue, hexTranslation);
   }
 };
@@ -243,7 +432,7 @@ ColorsDropDown.prototype = {
   },
   
   addColorCell: function(colorsList, colorValue) {
-    var newCell = this.tags.valueCell.append({color: colorValue.value}, colorsList);
+    var newCell = this.tags.valueCell.append({color: colorValue.getValue()}, colorsList);
     newCell.colorValue = colorValue;
     newCell.dropDown   = this;
     newCell.addEventListener('mousedown', this.cellMousedown, false);
@@ -267,7 +456,7 @@ ColorsDropDown.prototype = {
   },
   
   openPopup: function(colorCell, callback) {
-    this.firepicker.openPopup(this.editor, colorCell, colorCell.colorValue.toRGB(), callback);
+    this.firepicker.openPopup(this.editor, colorCell, colorCell.colorValue.toColor(), callback);
   }
 };
 
