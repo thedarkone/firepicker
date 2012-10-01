@@ -29,6 +29,35 @@ var ColorPicker = function(element, color, callback) {
 };
 
 ColorPicker.prototype = {
+  Position: (function() {
+    var style = (document.body || document.documentElement).style, setterName;
+    if ((style.transform !== undefined && (setterName = 'transform')) || (style.MozTransform !== undefined && (setterName = 'MozTransform'))) {
+      return {
+        set: function(element, left, top) {
+          element.leftPosition = left;
+          element.topPosition  = top;
+          element.style[setterName] = 'translate(' + (left || 0) + 'px, ' + (top || 0) + 'px)';
+        },
+        
+        get: function(element, positionProperty) {
+          return element[positionProperty + 'Position'] || 0;
+        }
+      };
+    } else {
+      return {
+        set: function(element, left, top) {
+          var style = element.style;
+          if (left !== undefined) { style.left = left + 'px'; }
+          if (top  !== undefined) { style.top  = top  + 'px'; }
+        },
+        
+        get: function(element, positionProperty) {
+          return parseInt(element.style[positionProperty]);
+        }
+      };
+    }
+  })(),
+  
   setupObservers: function() {
     this.sbPicker.addEventListener('mousedown', this.sbMousedown, false);
     this.opacityPicker.addEventListener('mousedown', this.opacityMousedown, false);
@@ -109,9 +138,9 @@ ColorPicker.prototype = {
       stopEvent(e);
       var top = e.pageY - this.offset.top, left = e.pageX - this.offset.left;
       if (this.sbExplicitHandle == this.brightnessHandle) {
-        left = parseInt(this.sbHandle.style.left);
+        left = this.Position.get(this.sbHandle, 'left');
       } else if (this.sbExplicitHandle == this.saturationHandle) {
-        top = parseInt(this.sbHandle.style.top);
+        top = this.Position.get(this.sbHandle, 'top');
       }
       this.setSbPicker(top, left);
       this.colorChanged();
@@ -157,8 +186,9 @@ ColorPicker.prototype = {
     left = this.makeWithin(left, 0, this.sbWidth);
     this.v = (this.sbHeight - top) / this.sbHeight;
     this.s = left / this.sbWidth;
-    this.sbHandle.style.top  = this.brightnessHandle.style.top  = top  + 'px';
-    this.sbHandle.style.left = this.saturationHandle.style.left = left + 'px';
+    this.Position.set(this.sbHandle, left, top);
+    this.Position.set(this.brightnessHandle, undefined, top);
+    this.Position.set(this.saturationHandle, left);
 
     this.updateOpacityPickerColor();
   },
@@ -166,7 +196,7 @@ ColorPicker.prototype = {
   setHue: function(top) {
     top    = this.makeWithin(top, 0, this.hueHeight);
     this.h = (this.hueHeight - top) / this.hueHeight;
-    this.hueHandle.style.top = top + 'px';
+    this.Position.set(this.hueHandle, undefined, top);
 
     this.updateSbPickerColor();
     this.updateOpacityPickerColor();
@@ -175,7 +205,7 @@ ColorPicker.prototype = {
   setOpacity: function(left) {
     left = this.makeWithin(left, 0, this.opacityWidth);
     this.a = left / this.opacityWidth;
-    this.opacityHandle.style.left = left + 'px';
+    this.Position.set(this.opacityHandle, left);
   },
 
   updateSbPickerColor: function() {
