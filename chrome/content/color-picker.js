@@ -14,7 +14,10 @@ var stopEvent = function(e) {
 
 var ColorPicker = function(element, color, callback) {
   this.document = element.ownerDocument;
-  this.setupPicker(element.querySelector('div.saturation_brightness'), 'sb');
+  var sbWrapper = element.querySelector('div.saturation_brightness');
+  this.setupPicker(sbWrapper, 'sb', 'main');
+  this.setupPicker(sbWrapper, 'saturation', 'saturation');
+  this.setupPicker(sbWrapper, 'brightness', 'brightness');
   this.setupPicker(element.querySelector('div.opacity'), 'opacity');
   this.setupPicker(element.querySelector('div.hue'), 'hue');
   this.sbPickerColor      = new Color.HSV(0, 1, 1);
@@ -46,10 +49,10 @@ ColorPicker.prototype = {
     body.removeEventListener('mousedown', this.bodyMouseDown);
   },
   
-  setupPicker: function(wrapperElement, pickerType) {
+  setupPicker: function(wrapperElement, pickerType, handleClass) {
     wrapperElement.borders = this.getBorderWidths(wrapperElement);
     this[pickerType + 'Picker'] = wrapperElement;
-    this[pickerType + 'Handle'] = wrapperElement.querySelector('img');
+    this[pickerType + 'Handle'] = wrapperElement.querySelector('img' + (handleClass ? '.' + handleClass : ''));
     this[pickerType + 'Width']  = wrapperElement.offsetWidth  - wrapperElement.borders.left - wrapperElement.borders.right;
     this[pickerType + 'Height'] = wrapperElement.offsetHeight - wrapperElement.borders.top  - wrapperElement.borders.bottom;
   },
@@ -83,6 +86,8 @@ ColorPicker.prototype = {
 
   sbMousedown: function(e) {
     this.sbDrag = true;
+    var target = e.target;
+    this.sbExplicitHandle = (target == this.brightnessHandle && this.brightnessHandle) || (target == this.saturationHandle && this.saturationHandle);
     this.offset = this.cumulativeOffsetWithBorders(this.sbPicker);
     this.mouseMove(e);
   },
@@ -102,7 +107,13 @@ ColorPicker.prototype = {
   mouseMove: function(e) {
     if (this.sbDrag) {
       stopEvent(e);
-      this.setSbPicker(e.pageY - this.offset.top, e.pageX - this.offset.left);
+      var top = e.pageY - this.offset.top, left = e.pageX - this.offset.left;
+      if (this.sbExplicitHandle == this.brightnessHandle) {
+        left = parseInt(this.sbHandle.style.left);
+      } else if (this.sbExplicitHandle == this.saturationHandle) {
+        top = parseInt(this.sbHandle.style.top);
+      }
+      this.setSbPicker(top, left);
       this.colorChanged();
     } else if (this.opacityDrag) {
       stopEvent(e);
@@ -146,8 +157,8 @@ ColorPicker.prototype = {
     left = this.makeWithin(left, 0, this.sbWidth);
     this.v = (this.sbHeight - top) / this.sbHeight;
     this.s = left / this.sbWidth;
-    this.sbHandle.style.top  = top  + 'px';
-    this.sbHandle.style.left = left + 'px';
+    this.sbHandle.style.top  = this.brightnessHandle.style.top  = top  + 'px';
+    this.sbHandle.style.left = this.saturationHandle.style.left = left + 'px';
 
     this.updateOpacityPickerColor();
   },
