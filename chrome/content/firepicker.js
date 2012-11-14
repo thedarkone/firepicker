@@ -375,8 +375,18 @@ ColorsDropDown.prototype = {
   }),
   
   editorShown: function() {
+    // This is run *after* the panel's onInlineEditorShow callback or else the newly inserted this.listContainer's will screw up the
+    // editor.box's DOM structure that Firebug's a11y.js Firebug.A11yModel.onInlineEditorShow is prepared to handle.
     this.onValueChange();
     this.attachInputChangeHandler();
+  },
+  
+  editorHidden: function() {
+    // We need to clean-up after ourselves or else we're risking breaking Firebug's a11y.js Firebug.A11yModel.onInlineEditorShow that expects
+    // a certain editor.box's DOM structure next time the inline editor is shown.
+    // see https://github.com/thedarkone/firepicker/issues/28#issuecomment-9653403
+    this.getContainerInsertionPoint().parentNode.removeChild(this.listContainer);
+    this.listContainer = null;
   },
   
   attachInputChangeHandler: function() {
@@ -623,12 +633,18 @@ Firebug.FirepickerModel = extend(Firebug.Module, {
   
   hookIntoCSSEditor: function(editor) {
     if (!editor.colorsDropDown) {
-      var originalShow = editor.show, self = this;
+      var originalShow = editor.show, originalHide = editor.hide, self = this;
 
       editor.colorsDropDown = new ColorsDropDown(editor, this);
       editor.show = function() {
         var result = originalShow.apply(this, arguments);
         this.colorsDropDown.editorShown();
+        return result;
+      };
+      
+      editor.hide = function() {
+        var result = originalHide.apply(this, arguments);
+        this.colorsDropDown.editorHidden();
         return result;
       };
       
